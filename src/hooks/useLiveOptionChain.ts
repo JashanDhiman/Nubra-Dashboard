@@ -1,0 +1,225 @@
+/**
+ * useLiveOptionChain
+ * Step 3 (REST bootstrap) → Step 4 (WebSocket) → Step 5 (subscribe) → Step 6 (process) → Step 8 (update UI)
+ * DATA-02, DATA-03, DATA-05, OPS-02
+ *
+ * In mock mode (no API key), uses a client-side tick simulator for live-looking updates.
+ */
+
+"use client";
+
+import { useEffect, useRef, useCallback } from "react";
+import { NubraWebSocketManager } from "@/lib/websocket-manager";
+import { useDashboardStore } from "@/lib/store";
+import { OptionChainSnapshot, WsTick } from "@/types";
+
+const POLL_INTERVAL = 30_000;    // 30s REST fallback polling
+const MOCK_TICK_INTERVAL = 700;  // ms between simulated ticks
+
+// ─── Mock tick simulator ──────────────────────────────────────────────────────
+function startMockTicks(
+  snapshot: OptionChainSnapshot,
+  applyTick: (tick: WsTick) => void,
+  setConnectionStatus: (s: Record<string, string>) => void
+): ReturnType<typeof setInterval> {
+  setConnectionStatus({ ws: "connected" });
+
+  // Keep mutable state so OI and LTP accumulate realistically across ticks
+  const legState: Record<string, { ltp: number; oi: number }> = {};
+  for (const row of snapshot.rows) {
+    legState[row.call.instrument_token] = { ltp: row.call.ltp, oi: row.call.oi };
+    legState[row.put.instrument_token]  = { ltp: row.put.ltp,  oi: row.put.oi };
+  }
+
+  return setInterval(() => {
+    const rows = snapshot.rows;
+    if (!rows.length) return;
+
+    // Update 1-3 random legs per tick
+    const count = Math.ceil(Math.random() * 3);
+    for (let i = 0; i < count; i++) {
+      const row    = rows[Math.floor(Math.random() * rows.length)];
+      const isCall = Math.random() > 0.5;
+      const leg    = isCall ? row.call : row.put;
+      const state  = legState[leg.instrument_token];
+      if (!state) continue;
+
+      const drift  = 1 + (Math.random() - 0.48) * 0.016;
+      const newLtp = Math.max(0.05, +(state.ltp * drift).toFixed(2));
+      const spread = Math.max(0.1, newLtp * 0.008);
+      const oiDelta = Math.round((Math.random() - 0.45) * 600);
+
+      state.ltp = newLtp;
+      state.oi  = Math.max(0, state.oi + oiDelta);
+
+      const tick: WsTick = {
+        instrument_token:   leg.instrument_token,
+        mode:               "full",
+        tradable:           true,
+        exchange_timestamp: Date.now() * 1_000_000,
+        last_trade_time:    Date.now(),
+        ltp:                newLtp,
+        bid:                +(newLtp - spread / 2).toFixed(2),
+        ask:                +(newLtp + spread / 2).toFixed(2),
+        volume:             leg.volume + Math.round(Math.random() * 150),
+        oi:                 state.oi,
+        greeks:             leg.greeks,
+        depth:              leg.depth,
+      };
+
+      applyTick(tick);
+    }
+  }, MOCK_TICK_INTERVAL);
+}
+
+export function useLiveOptionChain() {
+  const wsManager     = useRef<NubraWebSocketManager | null>(null);
+  const pollTimer     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mockTickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const {
+    filter,
+    setSnapshot,
+    applyTick,
+    setConnectionStatus,
+    setExpiries,
+  } = useDashboardStore();
+
+  // ── Step 3: Bootstrap with REST snapshot ──────────────────────────────────
+  const fetchSnapshot = useCallback(async () => {
+    if (!filter.expiry) return;
+
+    setConnectionStatus({ rest: "loading" });
+    try {
+      const res = await fetch(
+        `/api/options-chain?underlying=${filter.underlying}&expiry=${filter.expiry}`
+      );
+      if (!res.ok) throw new Error(await res.text());
+      const data: OptionChainSnapshot = await res.json();
+      setSnapshot(data);
+      setConnectionStatus({ rest: "success" });
+      return data;
+    } catch (err) {
+      console.error("[useLiveOptionChain] REST fetch failed:", err);
+      setConnectionStatus({ rest: "error" });
+    }
+  }, [filter.underlying, filter.expiry, setSnapshot, setConnectionStatus]);
+
+  // ── Fetch expiry list ─────────────────────────────────────────────────────
+  const fetchExpiries = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/options-chain?underlying=${filter.underlying}&action=expiries`
+      );
+      console.log(res);
+      if (!res.ok) return;
+      const data = await res.json();
+      setExpiries(data.expiries ?? []);
+    } catch (err) {
+      console.error("[useLiveOptionChain] Expiry fetch failed:", err);
+    }
+  }, [filter.underlying, setExpiries]);
+
+  const stopMockTicks = useCallback(() => {
+    if (mockTickTimer.current) {
+      clearInterval(mockTickTimer.current);
+      mockTickTimer.current = null;
+    }
+  }, []);
+
+  // ── Step 4 & 5: Connect WebSocket and subscribe ───────────────────────────
+  const connectWebSocket = useCallback(
+    async (snapshot: OptionChainSnapshot) => {
+      const isMock = (snapshot as any).mock === true;
+
+      if (isMock) {
+        stopMockTicks();
+        mockTickTimer.current = startMockTicks(snapshot, applyTick, setConnectionStatus);
+        return;
+      }
+
+      const tokens = snapshot.rows.flatMap((row) => [
+        row.call.instrument_token,
+        row.put.instrument_token,
+      ]);
+
+      if (wsManager.current) wsManager.current.disconnect();
+
+      const wsUrl = "wss://stream.nubra.in/v1/ws";
+      const ws = new NubraWebSocketManager(wsUrl);
+      wsManager.current = ws;
+
+      ws.onStatus((status) => setConnectionStatus({ ws: status }));
+      ws.onTick((ticks: WsTick[]) => ticks.forEach((t) => applyTick(t)));
+
+      try {
+        await ws.connect("session-managed-by-server");
+        ws.subscribe(tokens, "full");
+        ws.subscribeGreeks(tokens);
+      } catch (err) {
+        console.error("[useLiveOptionChain] WS connect failed, falling back to polling:", err);
+        startPolling();
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [applyTick, setConnectionStatus, stopMockTicks]
+  );
+
+  const startPolling = useCallback(() => {
+    if (pollTimer.current) return;
+    pollTimer.current = setInterval(fetchSnapshot, POLL_INTERVAL);
+  }, [fetchSnapshot]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimer.current) {
+      clearInterval(pollTimer.current);
+      pollTimer.current = null;
+    }
+  }, []);
+
+  // ── Main effect: re-run on underlying/expiry change ───────────────────────
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      setConnectionStatus({ auth: "authenticating" });
+
+      const authRes = await fetch("/api/auth", { method: "POST" });
+      if (!authRes.ok) {
+        setConnectionStatus({ auth: "unauthenticated" });
+        return;
+      }
+      setConnectionStatus({ auth: "authenticated" });
+
+      if (cancelled) return;
+
+      const snapshot = await fetchSnapshot();
+      if (!snapshot || cancelled) return;
+
+      await connectWebSocket(snapshot);
+    }
+
+    if (filter.expiry) {
+      stopMockTicks();
+      init();
+    }
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter.underlying, filter.expiry]);
+
+  useEffect(() => {
+    fetchExpiries();
+  }, [fetchExpiries]);
+
+  // OPS-03: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      wsManager.current?.disconnect();
+      stopPolling();
+      stopMockTicks();
+    };
+  }, [stopPolling, stopMockTicks]);
+
+  return { fetchSnapshot };
+}
