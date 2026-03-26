@@ -5,10 +5,10 @@
  * Mock mode returns a simulated order ID when credentials are not set.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { nubraClient } from "@/lib/nubra-client";
-import { PlaceOrderRequest } from "@/types";
-import { isMockMode } from "@/lib/mock-data";
+import { NextRequest, NextResponse } from 'next/server';
+import { nubraClient } from '@/lib/nubra-client';
+import { PlaceOrderRequest } from '@/types';
+import { isMockMode } from '@/lib/mock-data';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,14 +16,16 @@ export async function POST(request: NextRequest) {
 
     if (!body.trading_symbol || !body.transaction_type || !body.quantity) {
       return NextResponse.json(
-        { error: "trading_symbol, transaction_type, and quantity are required" },
+        {
+          error: 'trading_symbol, transaction_type, and quantity are required',
+        },
         { status: 400 }
       );
     }
 
     if (body.quantity <= 0) {
       return NextResponse.json(
-        { error: "Quantity must be positive" },
+        { error: 'Quantity must be positive' },
         { status: 400 }
       );
     }
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (isMockMode()) {
       const mockOrderId = `MOCK${Date.now().toString().slice(-8)}`;
       return NextResponse.json({
-        status: "success",
+        status: 'success',
         order_id: mockOrderId,
         message: `[MOCK] ${body.transaction_type} order for ${body.trading_symbol} accepted`,
         mock: true,
@@ -41,11 +43,11 @@ export async function POST(request: NextRequest) {
 
     const result = await nubraClient.placeOrder(body);
     return NextResponse.json(result, {
-      status: result.status === "success" ? 200 : 400,
+      status: result.status === 'success' ? 200 : 400,
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[Order API]", msg);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[Order API]', msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
@@ -58,7 +60,7 @@ export async function GET() {
     const orders = await nubraClient.getOrders();
     return NextResponse.json({ orders });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
+    const msg = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

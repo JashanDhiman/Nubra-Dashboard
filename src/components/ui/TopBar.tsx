@@ -1,11 +1,16 @@
-"use client";
+'use client';
 
-import { useDashboardStore } from "@/lib/store";
-import { Underlying } from "@/types";
-import { formatPrice, formatPct } from "@/lib/analytics";
-import clsx from "clsx";
+import { useDashboardStore } from '@/lib/store';
+import { Underlying } from '@/types';
+import { formatPrice, formatPct } from '@/lib/analytics';
+import clsx from 'clsx';
 
-const UNDERLYINGS: Underlying[] = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"];
+const UNDERLYINGS: Underlying[] = [
+  'NIFTY',
+  'BANKNIFTY',
+  'FINNIFTY',
+  'MIDCPNIFTY',
+];
 
 export function TopBar() {
   const { snapshot, filter, expiries, setFilter } = useDashboardStore();
@@ -27,15 +32,15 @@ export function TopBar() {
 
       {/* Underlying selector */}
       <div className="flex items-center gap-1">
-        {UNDERLYINGS.map((u) => (
+        {UNDERLYINGS.map(u => (
           <button
             key={u}
             onClick={() => setFilter({ underlying: u })}
             className={clsx(
-              "px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-colors",
+              'px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-colors',
               filter.underlying === u
-                ? "bg-accent-muted text-text-primary"
-                : "text-text-secondary hover:text-text-primary hover:bg-surface-3"
+                ? 'bg-accent-muted text-text-primary'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface-3'
             )}
           >
             {u}
@@ -47,15 +52,19 @@ export function TopBar() {
 
       {/* Expiry */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-text-muted font-mono uppercase tracking-wider">Expiry</span>
+        <span className="text-[10px] text-text-muted font-mono uppercase tracking-wider">
+          Expiry
+        </span>
         <select
           value={filter.expiry}
-          onChange={(e) => setFilter({ expiry: e.target.value })}
+          onChange={e => setFilter({ expiry: e.target.value })}
           className="bg-surface-3 border border-border text-text-primary text-[11px] font-mono px-2 py-1 rounded outline-none focus:border-accent-muted"
         >
           {expiries.length === 0 && <option value="">Loading...</option>}
-          {expiries.map((e) => (
-            <option key={e} value={e}>{e}</option>
+          {expiries.map(e => (
+            <option key={e} value={e}>
+              {e}
+            </option>
           ))}
         </select>
       </div>
@@ -64,12 +73,19 @@ export function TopBar() {
       <div className="ml-auto flex items-center gap-3">
         {spot > 0 && (
           <>
-            <span className="text-text-muted font-mono text-[11px]">{filter.underlying}</span>
+            <span className="text-text-muted font-mono text-[11px]">
+              {filter.underlying}
+            </span>
             <span className="font-mono text-lg font-medium text-text-primary tracking-tight">
               {formatPrice(spot)}
             </span>
-            <span className={clsx("font-mono text-xs", isUp ? "text-accent-green" : "text-accent-red")}>
-              {isUp ? "▲" : "▼"} {formatPct(Math.abs(chgPct))}
+            <span
+              className={clsx(
+                'font-mono text-xs',
+                isUp ? 'text-accent-green' : 'text-accent-red'
+              )}
+            >
+              {isUp ? '▲' : '▼'} {formatPct(Math.abs(chgPct))}
             </span>
           </>
         )}

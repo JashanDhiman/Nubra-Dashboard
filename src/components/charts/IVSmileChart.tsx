@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -9,9 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-} from "recharts";
-import { useDashboardStore } from "@/lib/store";
-import { toIVChartData } from "@/lib/analytics";
+} from 'recharts';
+import { useDashboardStore } from '@/lib/store';
+import { toIVChartData } from '@/lib/analytics';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -51,27 +51,30 @@ export function IVSmileChart() {
           Put IV
         </span>
         <span className="ml-auto">
-          IVR: {snapshot.iv_rank?.toFixed(0) ?? "--"}%
+          IVR: {snapshot.iv_rank?.toFixed(0) ?? '--'}%
         </span>
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
           <XAxis
             dataKey="strike"
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(v) => `${v}%`}
+            tickFormatter={v => `${v}%`}
             width={36}
-            domain={["auto", "auto"]}
+            domain={['auto', 'auto']}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#3d5570", strokeWidth: 0.5 }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ stroke: '#3d5570', strokeWidth: 0.5 }}
+          />
           <ReferenceLine
             x={snapshot.atm_strike}
             stroke="#00d97e"
@@ -84,7 +87,7 @@ export function IVSmileChart() {
             stroke="#2d9cf0"
             strokeWidth={1.5}
             dot={false}
-            activeDot={{ r: 3, fill: "#2d9cf0" }}
+            activeDot={{ r: 3, fill: '#2d9cf0' }}
           />
           <Line
             dataKey="putIV"
@@ -92,7 +95,7 @@ export function IVSmileChart() {
             stroke="#ff4560"
             strokeWidth={1.5}
             dot={false}
-            activeDot={{ r: 3, fill: "#ff4560" }}
+            activeDot={{ r: 3, fill: '#ff4560' }}
           />
         </LineChart>
       </ResponsiveContainer>

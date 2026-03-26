@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useLiveOptionChain } from "@/hooks/useLiveOptionChain";
-import { useDashboardStore } from "@/lib/store";
-import { TopBar } from "@/components/ui/TopBar";
-import { ConnectionBar } from "@/components/ui/ConnectionBar";
-import { StatsRow } from "@/components/ui/StatsRow";
-import { ChainControls } from "@/components/ui/ChainControls";
-import { OptionChainTable } from "@/components/OptionChainTable";
-import { SidePanel } from "@/components/SidePanel";
+import { useEffect } from 'react';
+import { useLiveOptionChain } from '@/hooks/useLiveOptionChain';
+import { useDashboardStore } from '@/lib/store';
+import { TopBar } from '@/components/ui/TopBar';
+import { ConnectionBar } from '@/components/ui/ConnectionBar';
+import { StatsRow } from '@/components/ui/StatsRow';
+import { ChainControls } from '@/components/ui/ChainControls';
+import { OptionChainTable } from '@/components/OptionChainTable';
+import { SidePanel } from '@/components/SidePanel';
+import { Header } from '@/components/Header';
 
 export default function DashboardPage() {
   const { filter, setFilter } = useDashboardStore();
@@ -25,28 +26,32 @@ export default function DashboardPage() {
   }, [expiries, filter.expiry, setFilter]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-surface">
-      {/* Top navigation bar */}
-      <TopBar />
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
-      {/* Connection status bar */}
-      <ConnectionBar />
+      <div className="flex flex-col h-screen overflow-hidden bg-surface">
+        {/* Top navigation bar */}
+        <TopBar />
 
-      {/* Key metrics row */}
-      <StatsRow />
+        {/* Connection status bar */}
+        <ConnectionBar />
 
-      {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Option chain table + controls */}
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <ChainControls />
-          <div className="flex-1 overflow-auto">
-            <OptionChainTable />
+        {/* Key metrics row */}
+        <StatsRow />
+
+        {/* Main content area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Option chain table + controls */}
+          <div className="flex flex-col flex-1 overflow-hidden">
+            <ChainControls />
+            <div className="flex-1 overflow-auto">
+              <OptionChainTable />
+            </div>
           </div>
-        </div>
 
-        {/* Side panel — charts + order entry */}
-        <SidePanel />
+          {/* Side panel — charts + order entry */}
+          <SidePanel />
+        </div>
       </div>
     </div>
   );

@@ -8,17 +8,12 @@
  * PROC-01: Real-time tick processing (exchange timestamps in nanoseconds)
  */
 
-import { WsTick, WsMode, WsSubscribeMessage, WsServerMessage } from "@/types";
+import { WsTick, WsMode, WsSubscribeMessage, WsServerMessage } from '@/types';
 
 type TickHandler = (ticks: WsTick[]) => void;
 type StatusHandler = (status: WSStatus) => void;
 
-export type WSStatus = "connecting" | "connected" | "disconnected" | "error";
-
-interface Subscription {
-  tokens: Set<string>;
-  mode: WsMode;
-}
+export type WSStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export class NubraWebSocketManager {
   private ws: WebSocket | null = null;
@@ -29,7 +24,7 @@ export class NubraWebSocketManager {
   private tickHandlers: Set<TickHandler> = new Set();
   private statusHandlers: Set<StatusHandler> = new Set();
 
-  private status: WSStatus = "disconnected";
+  private status: WSStatus = 'disconnected';
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 10;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -43,44 +38,44 @@ export class NubraWebSocketManager {
   // ── Connect with WS auth token ────────────────────────────────────────────
   async connect(wsToken: string): Promise<void> {
     this.wsToken = wsToken;
-    this.wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "wss://stream.nubra.in/v1/ws"}?token=${wsToken}`;
+    this.wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'wss://stream.nubra.in/v1/ws'}?token=${wsToken}`;
     this.doConnect();
   }
 
   private doConnect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
 
-    this.setStatus("connecting");
+    this.setStatus('connecting');
 
     try {
       this.ws = new WebSocket(this.wsUrl);
-      this.ws.binaryType = "arraybuffer";
+      this.ws.binaryType = 'arraybuffer';
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
-        this.setStatus("connected");
+        this.setStatus('connected');
         this.startHeartbeat();
         this.restoreSubscriptions(); // OPS-02: restore on reconnect
       };
 
-      this.ws.onmessage = (event) => {
+      this.ws.onmessage = event => {
         this.handleMessage(event);
       };
 
       this.ws.onerror = () => {
-        this.setStatus("error");
+        this.setStatus('error');
       };
 
-      this.ws.onclose = (event) => {
+      this.ws.onclose = event => {
         this.stopHeartbeat();
         if (!event.wasClean) {
           this.scheduleReconnect();
         } else {
-          this.setStatus("disconnected");
+          this.setStatus('disconnected');
         }
       };
     } catch (err) {
-      this.setStatus("error");
+      this.setStatus('error');
       this.scheduleReconnect();
     }
   }
@@ -89,17 +84,17 @@ export class NubraWebSocketManager {
   private handleMessage(event: MessageEvent): void {
     try {
       const msg: WsServerMessage =
-        typeof event.data === "string"
+        typeof event.data === 'string'
           ? JSON.parse(event.data)
           : this.decodeBinary(event.data);
 
-      if (msg.type === "ticks" && msg.data) {
+      if (msg.type === 'ticks' && msg.data) {
         // PROC-01: Process ticks as they arrive
         const processed = msg.data.map(this.processTick);
-        this.tickHandlers.forEach((handler) => handler(processed));
+        this.tickHandlers.forEach(handler => handler(processed));
       }
     } catch (err) {
-      console.error("[NubraWS] Message parse error:", err);
+      console.error('[NubraWS] Message parse error:', err);
     }
   }
 
@@ -111,45 +106,45 @@ export class NubraWebSocketManager {
 
   // ── Binary protocol decode (Nubra uses compact binary for performance) ────
   private decodeBinary(buffer: ArrayBuffer): WsServerMessage {
-    const text = new TextDecoder("utf-8").decode(buffer);
+    const text = new TextDecoder('utf-8').decode(buffer);
     return JSON.parse(text);
   }
 
   // ── Subscribe / Unsubscribe ───────────────────────────────────────────────
   // DATA-05: Bulk subscription support
-  subscribe(tokens: string[], mode: WsMode = "full"): void {
+  subscribe(tokens: string[], mode: WsMode = 'full'): void {
     if (!this.subscriptions.has(mode)) {
       this.subscriptions.set(mode, new Set());
     }
-    tokens.forEach((t) => this.subscriptions.get(mode)!.add(t));
+    tokens.forEach(t => this.subscriptions.get(mode)!.add(t));
 
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.send({ type: "subscribe", tokens, mode });
+      this.send({ type: 'subscribe', tokens, mode });
     }
   }
 
   unsubscribe(tokens: string[], mode?: WsMode): void {
     if (mode) {
-      tokens.forEach((t) => this.subscriptions.get(mode)?.delete(t));
+      tokens.forEach(t => this.subscriptions.get(mode)?.delete(t));
     } else {
-      this.subscriptions.forEach((set) => tokens.forEach((t) => set.delete(t)));
+      this.subscriptions.forEach(set => tokens.forEach(t => set.delete(t)));
     }
 
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.send({ type: "unsubscribe", tokens });
+      this.send({ type: 'unsubscribe', tokens });
     }
   }
 
   // DATA-03: Subscribe specifically to Greeks channel
   subscribeGreeks(tokens: string[]): void {
-    this.subscribe(tokens, "greeks");
+    this.subscribe(tokens, 'greeks');
   }
 
   // OPS-02: Restore all subscriptions after reconnect
   private restoreSubscriptions(): void {
     this.subscriptions.forEach((tokens, mode) => {
       if (tokens.size > 0) {
-        this.send({ type: "subscribe", tokens: Array.from(tokens), mode });
+        this.send({ type: 'subscribe', tokens: Array.from(tokens), mode });
       }
     });
   }
@@ -166,7 +161,7 @@ export class NubraWebSocketManager {
     this.stopHeartbeat();
     this.heartbeatTimer = setInterval(() => {
       if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: "ping" }));
+        this.ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, this.heartbeatInterval);
   }
@@ -181,13 +176,13 @@ export class NubraWebSocketManager {
   // ── Reconnect with exponential backoff ───────────────────────────────────
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.setStatus("error");
+      this.setStatus('error');
       return;
     }
 
     const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 30_000);
     this.reconnectAttempts++;
-    this.setStatus("connecting");
+    this.setStatus('connecting');
 
     this.reconnectTimer = setTimeout(() => {
       this.doConnect();
@@ -207,7 +202,7 @@ export class NubraWebSocketManager {
 
   private setStatus(status: WSStatus): void {
     this.status = status;
-    this.statusHandlers.forEach((h) => h(status));
+    this.statusHandlers.forEach(h => h(status));
   }
 
   getStatus(): WSStatus {
@@ -224,10 +219,10 @@ export class NubraWebSocketManager {
 
     if (this.ws) {
       this.ws.onclose = null; // prevent reconnect loop
-      this.ws.close(1000, "Client disconnect");
+      this.ws.close(1000, 'Client disconnect');
       this.ws = null;
     }
 
-    this.setStatus("disconnected");
+    this.setStatus('disconnected');
   }
 }

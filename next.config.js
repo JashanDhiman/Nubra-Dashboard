@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: { serverComponentsExternalPackages: ["ws"] },
+  experimental: { serverComponentsExternalPackages: ['ws'] },
   env: {
     NUBRA_API_KEY: process.env.NUBRA_API_KEY,
     NUBRA_MPIN: process.env.NUBRA_MPIN,

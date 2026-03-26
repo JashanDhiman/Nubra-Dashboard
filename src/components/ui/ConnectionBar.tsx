@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useDashboardStore } from "@/lib/store";
-import { format } from "date-fns";
-import clsx from "clsx";
+import { useDashboardStore } from '@/lib/store';
+import { format } from 'date-fns';
+import clsx from 'clsx';
 
 export function ConnectionBar() {
   const { connectionStatus, lastUpdateTime, snapshot } = useDashboardStore();
@@ -22,13 +22,13 @@ export function ConnectionBar() {
       {/* WS Status */}
       <StatusPill
         label="WebSocket"
-        status={isMock ? "mock" : ws}
+        status={isMock ? 'mock' : ws}
         map={{
-          connected: "ok",
-          connecting: "warn",
-          disconnected: "off",
-          error: "err",
-          mock: "warn",
+          connected: 'ok',
+          connecting: 'warn',
+          disconnected: 'off',
+          error: 'err',
+          mock: 'warn',
         }}
       />
 
@@ -37,23 +37,23 @@ export function ConnectionBar() {
         label="REST"
         status={rest}
         map={{
-          success: "ok",
-          loading: "warn",
-          idle: "off",
-          error: "err",
+          success: 'ok',
+          loading: 'warn',
+          idle: 'off',
+          error: 'err',
         }}
       />
 
       {/* Auth Status */}
       <StatusPill
         label="Auth"
-        status={isMock ? "mock" : auth}
+        status={isMock ? 'mock' : auth}
         map={{
-          authenticated: "ok",
-          authenticating: "warn",
-          unauthenticated: "off",
-          expired: "err",
-          mock: "warn",
+          authenticated: 'ok',
+          authenticating: 'warn',
+          unauthenticated: 'off',
+          expired: 'err',
+          mock: 'warn',
         }}
       />
 
@@ -64,14 +64,14 @@ export function ConnectionBar() {
           </span>
         )}
         {lastUpdateTime && (
-          <span>Updated {format(lastUpdateTime, "HH:mm:ss")}</span>
+          <span>Updated {format(lastUpdateTime, 'HH:mm:ss')}</span>
         )}
       </div>
     </div>
   );
 }
 
-type Variant = "ok" | "warn" | "off" | "err";
+type Variant = 'ok' | 'warn' | 'off' | 'err';
 
 function StatusPill({
   label,
@@ -82,23 +82,23 @@ function StatusPill({
   status: string;
   map: Record<string, Variant>;
 }) {
-  const variant = map[status] ?? "off";
+  const variant = map[status] ?? 'off';
   const colors: Record<Variant, string> = {
-    ok: "text-accent-green",
-    warn: "text-accent-amber",
-    off: "text-text-muted",
-    err: "text-accent-red",
+    ok: 'text-accent-green',
+    warn: 'text-accent-amber',
+    off: 'text-text-muted',
+    err: 'text-accent-red',
   };
   const dotColors: Record<Variant, string> = {
-    ok: "bg-accent-green animate-pulse-dot",
-    warn: "bg-accent-amber animate-pulse-dot",
-    off: "bg-text-muted",
-    err: "bg-accent-red animate-pulse-dot",
+    ok: 'bg-accent-green animate-pulse-dot',
+    warn: 'bg-accent-amber animate-pulse-dot',
+    off: 'bg-text-muted',
+    err: 'bg-accent-red animate-pulse-dot',
   };
 
   return (
-    <div className={clsx("flex items-center gap-1.5", colors[variant])}>
-      <span className={clsx("w-1.5 h-1.5 rounded-full", dotColors[variant])} />
+    <div className={clsx('flex items-center gap-1.5', colors[variant])}>
+      <span className={clsx('w-1.5 h-1.5 rounded-full', dotColors[variant])} />
       <span>{label}</span>
       <span className="opacity-50">·</span>
       <span className="capitalize">{status}</span>

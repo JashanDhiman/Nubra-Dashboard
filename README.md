@@ -132,32 +132,32 @@ src/
 
 ## Requirements Coverage
 
-| Req ID | Description | Implementation |
-|--------|-------------|----------------|
-| AUTH-01 | MPIN-based auth | `NubraClient.authenticate()` |
-| AUTH-02 | Session token in headers | `Authorization: Bearer <token>` |
-| AUTH-03 | Proactive token refresh | `SessionManager.scheduleRefresh()` |
-| AUTH-04 | Secure credential storage | `.env.local` environment variables |
-| DATA-01 | REST option chain snapshots | `/api/options-chain` route |
-| DATA-02 | WebSocket streaming | `NubraWebSocketManager` |
-| DATA-03 | Greeks WebSocket channel | `ws.subscribeGreeks(tokens)` |
-| DATA-04 | 20-level market depth | `MarketDepth` type + depth display |
-| DATA-05 | Bulk subscriptions | `ws.subscribe(tokens[])` |
-| PROC-01 | Real-time tick processing | `applyTick()` in Zustand store |
-| PROC-02 | Greeks computation | `analytics.ts` + API data |
-| PROC-03 | OI analytics | `calculateMaxPain`, `calculatePCR` |
-| PROC-04 | Volume aggregation / VWAP | `calculateVWAP()` |
-| UI-01 | Interactive option chain table | `OptionChainTable.tsx` |
-| UI-02 | GEX Dashboard | `GEXChart.tsx` |
-| UI-03 | IV Smile/Skew | `IVSmileChart.tsx` |
-| UI-04 | OI Profile chart | `OIProfileChart.tsx` |
-| UI-05 | OI Tracker & Max Pain | `StatsRow` + `calculateMaxPain` |
-| UI-06 | Real-time updates (no refresh) | Zustand + WebSocket ticks |
-| UI-07 | PlaceOrder from chain | `OrderPanel.tsx` + `/api/order` |
-| OPS-01 | Rate limit compliance | `RateLimiter` (60 req/min) |
-| OPS-02 | Connection resilience | Exponential backoff reconnect |
-| OPS-03 | Resource management | `ws.disconnect()` cleanup |
-| OPS-04 | 429 handling | Retry-After backoff in client |
+| Req ID  | Description                    | Implementation                     |
+| ------- | ------------------------------ | ---------------------------------- |
+| AUTH-01 | MPIN-based auth                | `NubraClient.authenticate()`       |
+| AUTH-02 | Session token in headers       | `Authorization: Bearer <token>`    |
+| AUTH-03 | Proactive token refresh        | `SessionManager.scheduleRefresh()` |
+| AUTH-04 | Secure credential storage      | `.env.local` environment variables |
+| DATA-01 | REST option chain snapshots    | `/api/options-chain` route         |
+| DATA-02 | WebSocket streaming            | `NubraWebSocketManager`            |
+| DATA-03 | Greeks WebSocket channel       | `ws.subscribeGreeks(tokens)`       |
+| DATA-04 | 20-level market depth          | `MarketDepth` type + depth display |
+| DATA-05 | Bulk subscriptions             | `ws.subscribe(tokens[])`           |
+| PROC-01 | Real-time tick processing      | `applyTick()` in Zustand store     |
+| PROC-02 | Greeks computation             | `analytics.ts` + API data          |
+| PROC-03 | OI analytics                   | `calculateMaxPain`, `calculatePCR` |
+| PROC-04 | Volume aggregation / VWAP      | `calculateVWAP()`                  |
+| UI-01   | Interactive option chain table | `OptionChainTable.tsx`             |
+| UI-02   | GEX Dashboard                  | `GEXChart.tsx`                     |
+| UI-03   | IV Smile/Skew                  | `IVSmileChart.tsx`                 |
+| UI-04   | OI Profile chart               | `OIProfileChart.tsx`               |
+| UI-05   | OI Tracker & Max Pain          | `StatsRow` + `calculateMaxPain`    |
+| UI-06   | Real-time updates (no refresh) | Zustand + WebSocket ticks          |
+| UI-07   | PlaceOrder from chain          | `OrderPanel.tsx` + `/api/order`    |
+| OPS-01  | Rate limit compliance          | `RateLimiter` (60 req/min)         |
+| OPS-02  | Connection resilience          | Exponential backoff reconnect      |
+| OPS-03  | Resource management            | `ws.disconnect()` cleanup          |
+| OPS-04  | 429 handling                   | Retry-After backoff in client      |
 
 ---
 

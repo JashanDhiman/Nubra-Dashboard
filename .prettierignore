@@ -1,0 +1,11 @@
+node_modules
+.next
+out
+dist
+build
+public
+*.log
+.env*.local
+.DS_Store
+coverage
+.nyc_output

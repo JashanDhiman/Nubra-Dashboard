@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,9 +10,9 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Cell,
-} from "recharts";
-import { useDashboardStore } from "@/lib/store";
-import { toGEXChartData, formatLargeNumber } from "@/lib/analytics";
+} from 'recharts';
+import { useDashboardStore } from '@/lib/store';
+import { toGEXChartData, formatLargeNumber } from '@/lib/analytics';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -20,11 +20,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return (
     <div className="bg-surface-1 border border-border rounded px-3 py-2 text-[11px] font-mono">
       <div className="text-text-muted mb-1">Strike {label}</div>
-      <div style={{ color: v >= 0 ? "#00d97e" : "#ff4560" }}>
-        GEX: {v >= 0 ? "+" : ""}{v.toFixed(2)}M
+      <div style={{ color: v >= 0 ? '#00d97e' : '#ff4560' }}>
+        GEX: {v >= 0 ? '+' : ''}
+        {v.toFixed(2)}M
       </div>
       <div className="text-text-muted text-[10px] mt-0.5">
-        {v >= 0 ? "Dealers long gamma (stabilizing)" : "Dealers short gamma (volatile)"}
+        {v >= 0
+          ? 'Dealers long gamma (stabilizing)'
+          : 'Dealers short gamma (volatile)'}
       </div>
     </div>
   );
@@ -60,8 +63,9 @@ export function GEXChart() {
             Short gamma
           </span>
         </div>
-        <span style={{ color: netGEX >= 0 ? "#00d97e" : "#ff4560" }}>
-          Net GEX: {netGEX >= 0 ? "+" : ""}{netGEX.toFixed(1)}M
+        <span style={{ color: netGEX >= 0 ? '#00d97e' : '#ff4560' }}>
+          Net GEX: {netGEX >= 0 ? '+' : ''}
+          {netGEX.toFixed(1)}M
         </span>
       </div>
 
@@ -69,19 +73,22 @@ export function GEXChart() {
         <BarChart data={data} barCategoryGap="20%">
           <XAxis
             dataKey="strike"
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(v) => `${v}M`}
+            tickFormatter={v => `${v}M`}
             width={36}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+          />
           <ReferenceLine y={0} stroke="#3d5570" strokeWidth={0.5} />
           <ReferenceLine
             x={snapshot.atm_strike}
@@ -93,7 +100,7 @@ export function GEXChart() {
             {data.map((entry, i) => (
               <Cell
                 key={i}
-                fill={entry.gex >= 0 ? "#00d97e" : "#ff4560"}
+                fill={entry.gex >= 0 ? '#00d97e' : '#ff4560'}
                 opacity={0.8}
               />
             ))}

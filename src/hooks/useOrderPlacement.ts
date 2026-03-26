@@ -1,7 +1,13 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { PlaceOrderRequest, PlaceOrderResponse, OrderSide, OrderType, ProductType } from "@/types";
+import { useState, useCallback } from 'react';
+import {
+  PlaceOrderRequest,
+  PlaceOrderResponse,
+  OrderSide,
+  OrderType,
+  ProductType,
+} from '@/types';
 
 interface OrderState {
   isLoading: boolean;
@@ -21,9 +27,9 @@ export function useOrderPlacement() {
       setState({ isLoading: true, result: null, error: null });
 
       try {
-        const res = await fetch("/api/order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order),
         });
 
@@ -32,7 +38,7 @@ export function useOrderPlacement() {
         setState({ isLoading: false, result, error: null });
         return result;
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Order failed";
+        const msg = err instanceof Error ? err.message : 'Order failed';
         setState({ isLoading: false, result: null, error: msg });
         return null;
       }

@@ -10,17 +10,17 @@ import {
   OptionLeg,
   Greeks,
   MarketDepth,
-} from "@/types";
+} from '@/types';
 
 // ─── Config per underlying ────────────────────────────────────────────────────
 const CONFIGS: Record<
   string,
   { spot: number; step: number; atm: number; lotSize: number; ivBase: number }
 > = {
-  NIFTY:      { spot: 24042, step: 50,  atm: 24050, lotSize: 50,  ivBase: 14 },
-  BANKNIFTY:  { spot: 51340, step: 100, atm: 51300, lotSize: 15,  ivBase: 16 },
-  FINNIFTY:   { spot: 23580, step: 50,  atm: 23600, lotSize: 40,  ivBase: 15 },
-  MIDCPNIFTY: { spot: 12800, step: 25,  atm: 12800, lotSize: 75,  ivBase: 18 },
+  NIFTY: { spot: 24042, step: 50, atm: 24050, lotSize: 50, ivBase: 14 },
+  BANKNIFTY: { spot: 51340, step: 100, atm: 51300, lotSize: 15, ivBase: 16 },
+  FINNIFTY: { spot: 23580, step: 50, atm: 23600, lotSize: 40, ivBase: 15 },
+  MIDCPNIFTY: { spot: 12800, step: 25, atm: 12800, lotSize: 75, ivBase: 18 },
 };
 
 // Deterministic seeded random — same seed → same value, so data is stable between calls
@@ -44,25 +44,48 @@ function buildGreeks(
 
   // Approximate Black-Scholes delta
   const rawDelta = isCall
-    ? Math.max(0.01, Math.min(0.99, 0.5 + moneyness * 3 + seededRand(seed + 1, -0.02, 0.02)))
-    : Math.max(-0.99, Math.min(-0.01, -0.5 + moneyness * 3 + seededRand(seed + 1, -0.02, 0.02)));
+    ? Math.max(
+        0.01,
+        Math.min(0.99, 0.5 + moneyness * 3 + seededRand(seed + 1, -0.02, 0.02))
+      )
+    : Math.max(
+        -0.99,
+        Math.min(
+          -0.01,
+          -0.5 + moneyness * 3 + seededRand(seed + 1, -0.02, 0.02)
+        )
+      );
 
   const delta = +rawDelta.toFixed(3);
-  const gamma = +(0.0002 * Math.exp(-dist * 15) + seededRand(seed + 2, 0, 0.00005)).toFixed(5);
-  const theta = +(-(iv / 100) * spot * gamma * 0.5 + seededRand(seed + 3, -0.5, 0)).toFixed(2);
-  const vega  = +(spot * gamma * 0.01 + seededRand(seed + 4, 0, 0.05)).toFixed(3);
+  const gamma = +(
+    0.0002 * Math.exp(-dist * 15) +
+    seededRand(seed + 2, 0, 0.00005)
+  ).toFixed(5);
+  const theta = +(
+    -(iv / 100) * spot * gamma * 0.5 +
+    seededRand(seed + 3, -0.5, 0)
+  ).toFixed(2);
+  const vega = +(spot * gamma * 0.01 + seededRand(seed + 4, 0, 0.05)).toFixed(
+    3
+  );
 
   return { iv, delta, gamma, theta, vega };
 }
 
 function buildDepth(midPrice: number, seed: number): MarketDepth {
   const bids = Array.from({ length: 5 }, (_, i) => ({
-    price: +(midPrice * (1 - (i + 1) * 0.002) + seededRand(seed + i, -0.1, 0.1)).toFixed(2),
+    price: +(
+      midPrice * (1 - (i + 1) * 0.002) +
+      seededRand(seed + i, -0.1, 0.1)
+    ).toFixed(2),
     quantity: Math.round(seededRand(seed + i + 10, 50, 500)),
     orders: Math.round(seededRand(seed + i + 20, 1, 12)),
   }));
   const asks = Array.from({ length: 5 }, (_, i) => ({
-    price: +(midPrice * (1 + (i + 1) * 0.002) + seededRand(seed + i + 30, -0.1, 0.1)).toFixed(2),
+    price: +(
+      midPrice * (1 + (i + 1) * 0.002) +
+      seededRand(seed + i + 30, -0.1, 0.1)
+    ).toFixed(2),
     quantity: Math.round(seededRand(seed + i + 40, 50, 500)),
     orders: Math.round(seededRand(seed + i + 50, 1, 12)),
   }));
@@ -86,28 +109,35 @@ function buildLeg(
   const intrinsic = isCall
     ? Math.max(0, spot - strike)
     : Math.max(0, strike - spot);
-  const timeValue = Math.max(0.5, seededRand(seed, 1, 60) * Math.exp(-dist * 10));
+  const timeValue = Math.max(
+    0.5,
+    seededRand(seed, 1, 60) * Math.exp(-dist * 10)
+  );
   const ltp = +(intrinsic + timeValue).toFixed(2);
   const bid = +(ltp * (1 - seededRand(seed + 1, 0.005, 0.015))).toFixed(2);
   const ask = +(ltp * (1 + seededRand(seed + 2, 0.005, 0.015))).toFixed(2);
 
   // OI — higher near ATM, call OI > put OI slightly OTM from call side
   const oiBase = isCall
-    ? (moneyness > 0 ? seededRand(seed + 3, 0.5, 1.2) : seededRand(seed + 3, 1.0, 3.5))
-    : (moneyness < 0 ? seededRand(seed + 3, 0.5, 1.2) : seededRand(seed + 3, 1.0, 3.5));
+    ? moneyness > 0
+      ? seededRand(seed + 3, 0.5, 1.2)
+      : seededRand(seed + 3, 1.0, 3.5)
+    : moneyness < 0
+      ? seededRand(seed + 3, 0.5, 1.2)
+      : seededRand(seed + 3, 1.0, 3.5);
   const oi = Math.round(oiBase * 1e5 * (1 + Math.exp(-dist * 8)));
   const oiChange = Math.round(seededRand(seed + 4, -5000, 15000));
 
-  const side = isCall ? "CE" : "PE";
-  const expiryShort = expiry.replace(/-/g, "").slice(2); // "20250327" → "250327"
+  const side = isCall ? 'CE' : 'PE';
+  const expiryShort = expiry.replace(/-/g, '').slice(2); // "20250327" → "250327"
   const tradingSymbol = `${underlying}${expiryShort}${strike}${side}`;
   const instrumentToken = `NFO:${tradingSymbol}`;
 
   const greeks = buildGreeks(strike, spot, isCall, ivBase, seed + 5);
-  const depth  = buildDepth(ltp, seed + 100);
+  const depth = buildDepth(ltp, seed + 100);
 
   const volume = Math.round(seededRand(seed + 6, 1000, 80000));
-  const cumVol  = volume * Math.round(seededRand(seed + 7, 2, 8));
+  const cumVol = volume * Math.round(seededRand(seed + 7, 2, 8));
 
   return {
     instrument_token: instrumentToken,
@@ -115,16 +145,16 @@ function buildLeg(
     ltp,
     bid,
     ask,
-    open:  +(ltp * seededRand(seed + 8, 0.9, 1.1)).toFixed(2),
-    high:  +(ltp * seededRand(seed + 9, 1.0, 1.2)).toFixed(2),
-    low:   +(ltp * seededRand(seed + 10, 0.7, 1.0)).toFixed(2),
+    open: +(ltp * seededRand(seed + 8, 0.9, 1.1)).toFixed(2),
+    high: +(ltp * seededRand(seed + 9, 1.0, 1.2)).toFixed(2),
+    low: +(ltp * seededRand(seed + 10, 0.7, 1.0)).toFixed(2),
     close: +(ltp * seededRand(seed + 11, 0.95, 1.05)).toFixed(2),
-    change: +(seededRand(seed + 12, -30, 50)).toFixed(2),
-    change_pct: +(seededRand(seed + 13, -8, 12)).toFixed(2),
+    change: +seededRand(seed + 12, -30, 50).toFixed(2),
+    change_pct: +seededRand(seed + 13, -8, 12).toFixed(2),
     volume,
     oi,
     oi_change: oiChange,
-    oi_change_pct: +(oiChange / oi * 100).toFixed(2),
+    oi_change_pct: +((oiChange / oi) * 100).toFixed(2),
     tick_volume: Math.round(seededRand(seed + 14, 10, 300)),
     cumulative_volume: cumVol,
     cumulative_volume_premium: +(cumVol * ltp).toFixed(0),
@@ -164,36 +194,51 @@ export function generateMockSnapshot(
   expiry: string,
   strikeCount = 20
 ): OptionChainSnapshot {
-  const cfg = CONFIGS[underlying] ?? CONFIGS["NIFTY"];
+  const cfg = CONFIGS[underlying] ?? CONFIGS['NIFTY'];
 
   // Add small random drift to spot so it changes each call
   const driftSeed = Date.now() % 10000;
   const spot = cfg.spot + Math.round(seededRand(driftSeed, -50, 80));
-  const atmStrike =
-    Math.round(spot / cfg.step) * cfg.step;
+  const atmStrike = Math.round(spot / cfg.step) * cfg.step;
 
   const rows: OptionChainRow[] = [];
   let totalCallOI = 0;
-  let totalPutOI  = 0;
+  let totalPutOI = 0;
 
   for (let i = -strikeCount; i <= strikeCount; i++) {
     const strike = atmStrike + i * cfg.step;
     const seedBase = strike * 1000 + (expiry.charCodeAt(0) ?? 0);
 
-    const call = buildLeg(strike, spot, true,  underlying, expiry, cfg.ivBase, seedBase);
-    const put  = buildLeg(strike, spot, false, underlying, expiry, cfg.ivBase, seedBase + 500);
+    const call = buildLeg(
+      strike,
+      spot,
+      true,
+      underlying,
+      expiry,
+      cfg.ivBase,
+      seedBase
+    );
+    const put = buildLeg(
+      strike,
+      spot,
+      false,
+      underlying,
+      expiry,
+      cfg.ivBase,
+      seedBase + 500
+    );
 
     totalCallOI += call.oi;
-    totalPutOI  += put.oi;
+    totalPutOI += put.oi;
 
     rows.push({
       strike,
       call,
       put,
       isATM: strike === atmStrike,
-      pcr:   call.oi > 0 ? +(put.oi / call.oi).toFixed(2) : 0,
+      pcr: call.oi > 0 ? +(put.oi / call.oi).toFixed(2) : 0,
       netOI: call.oi - put.oi,
-      gex:   0, // computed by route handler
+      gex: 0, // computed by route handler
       maxPainWeight: 0,
     });
   }
@@ -204,15 +249,15 @@ export function generateMockSnapshot(
     underlying,
     expiry,
     spot,
-    spot_change: +(seededRand(driftSeed + 1, -120, 180)).toFixed(2),
-    spot_change_pct: +(seededRand(driftSeed + 2, -0.8, 0.9)).toFixed(2),
+    spot_change: +seededRand(driftSeed + 1, -120, 180).toFixed(2),
+    spot_change_pct: +seededRand(driftSeed + 2, -0.8, 0.9).toFixed(2),
     atm_strike: atmStrike,
     total_call_oi: totalCallOI,
     total_put_oi: totalPutOI,
     pcr,
     max_pain: atmStrike - cfg.step * 2, // placeholder — overridden by route
-    iv_rank: +(seededRand(driftSeed + 3, 20, 85)).toFixed(1),
-    iv_percentile: +(seededRand(driftSeed + 4, 25, 90)).toFixed(1),
+    iv_rank: +seededRand(driftSeed + 3, 20, 85).toFixed(1),
+    iv_percentile: +seededRand(driftSeed + 4, 25, 90).toFixed(1),
     rows,
     timestamp: new Date().toISOString(),
   };
@@ -221,5 +266,8 @@ export function generateMockSnapshot(
 // ─── Check if mock mode is active ────────────────────────────────────────────
 export function isMockMode(): boolean {
   return false;
-  return !process.env.NUBRA_API_KEY || process.env.NUBRA_API_KEY === "your_client_id_here";
+  return (
+    !process.env.NUBRA_API_KEY ||
+    process.env.NUBRA_API_KEY === 'your_client_id_here'
+  );
 }

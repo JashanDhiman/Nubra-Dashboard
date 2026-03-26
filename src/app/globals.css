@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --font-mono: var(--font-ibm-plex-mono), "Courier New", monospace;
+  --font-mono: var(--font-ibm-plex-mono), 'Courier New', monospace;
   --font-sans: var(--font-dm-sans), sans-serif;
 }
 

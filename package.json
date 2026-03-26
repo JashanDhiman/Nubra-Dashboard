@@ -6,30 +6,39 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
+    "axios": "^1.7.2",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7",
-    "axios": "^1.7.2",
+    "speakeasy": "^2.0.0",
     "ws": "^8.18.0",
-    "dotenv": "^16.4.5",
-    "clsx": "^2.1.1",
-    "zustand": "^4.5.4",
-    "date-fns": "^3.6.0"
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/speakeasy": "^2.0.10",
     "@types/ws": "^8.5.12",
-    "typescript": "^5",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "autoprefixer": "^10",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
-    "tailwindcss": "^3.4.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "postcss": "^8",
-    "autoprefixer": "^10"
+    "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5"
   }
 }

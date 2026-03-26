@@ -7,7 +7,12 @@
  * UI-05: Max Pain calculation
  */
 
-import { OptionChainRow, OIChartPoint, IVChartPoint, GEXChartPoint } from "@/types";
+import {
+  OptionChainRow,
+  OIChartPoint,
+  IVChartPoint,
+  GEXChartPoint,
+} from '@/types';
 
 // ─── Max Pain ─────────────────────────────────────────────────────────────────
 // Max Pain = strike where total options dollar loss is maximized
@@ -47,18 +52,22 @@ export function calculatePCR(rows: OptionChainRow[]): number {
 }
 
 export function getPCRSignal(pcr: number): { label: string; color: string } {
-  if (pcr > 1.5) return { label: "Extremely Bullish", color: "#00d97e" };
-  if (pcr > 1.2) return { label: "Bullish", color: "#00d97e" };
-  if (pcr > 0.8) return { label: "Neutral", color: "#f59e0b" };
-  if (pcr > 0.5) return { label: "Bearish", color: "#ff4560" };
-  return { label: "Extremely Bearish", color: "#ff4560" };
+  if (pcr > 1.5) return { label: 'Extremely Bullish', color: '#00d97e' };
+  if (pcr > 1.2) return { label: 'Bullish', color: '#00d97e' };
+  if (pcr > 0.8) return { label: 'Neutral', color: '#f59e0b' };
+  if (pcr > 0.5) return { label: 'Bearish', color: '#ff4560' };
+  return { label: 'Extremely Bearish', color: '#ff4560' };
 }
 
 // ─── Gamma Exposure (GEX) ─────────────────────────────────────────────────────
 // GEX = Delta × Gamma × OI × Spot × Contract_multiplier
 // Positive GEX: dealers are long gamma → stabilizing price
 // Negative GEX: dealers are short gamma → volatile/trend-following
-export function calculateGEX(row: OptionChainRow, spot: number, multiplier = 50): number {
+export function calculateGEX(
+  row: OptionChainRow,
+  spot: number,
+  multiplier = 50
+): number {
   const callGEX = row.call.greeks.gamma * row.call.oi * spot * multiplier;
   const putGEX = -row.put.greeks.gamma * row.put.oi * spot * multiplier;
   return +(callGEX + putGEX).toFixed(2);
@@ -80,15 +89,15 @@ export function calculateVWAP(
 
 // ─── OI Change % ──────────────────────────────────────────────────────────────
 export function oiChangeLabel(pct: number): string {
-  const sign = pct >= 0 ? "+" : "";
+  const sign = pct >= 0 ? '+' : '';
   return `${sign}${pct.toFixed(1)}%`;
 }
 
 // ─── Chart data transformers ──────────────────────────────────────────────────
 export function toOIChartData(rows: OptionChainRow[]): OIChartPoint[] {
-  return rows.map((r) => ({
+  return rows.map(r => ({
     strike: r.strike,
-    callOI: Math.round(r.call.oi / 1000),      // in thousands
+    callOI: Math.round(r.call.oi / 1000), // in thousands
     putOI: Math.round(r.put.oi / 1000),
     callOIChange: Math.round(r.call.oi_change / 1000),
     putOIChange: Math.round(r.put.oi_change / 1000),
@@ -96,15 +105,18 @@ export function toOIChartData(rows: OptionChainRow[]): OIChartPoint[] {
 }
 
 export function toIVChartData(rows: OptionChainRow[]): IVChartPoint[] {
-  return rows.map((r) => ({
+  return rows.map(r => ({
     strike: r.strike,
     callIV: +r.call.greeks.iv.toFixed(2),
     putIV: +r.put.greeks.iv.toFixed(2),
   }));
 }
 
-export function toGEXChartData(rows: OptionChainRow[], spot: number): GEXChartPoint[] {
-  return rows.map((r) => ({
+export function toGEXChartData(
+  rows: OptionChainRow[],
+  spot: number
+): GEXChartPoint[] {
+  return rows.map(r => ({
     strike: r.strike,
     gex: +(calculateGEX(r, spot) / 1e6).toFixed(2), // in millions
   }));
@@ -112,31 +124,31 @@ export function toGEXChartData(rows: OptionChainRow[], spot: number): GEXChartPo
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
 export function formatOI(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + "K";
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K';
   return n.toString();
 }
 
 export function formatPrice(n: number): string {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
 }
 
 export function formatStrike(n: number): string {
-  return new Intl.NumberFormat("en-IN").format(n);
+  return new Intl.NumberFormat('en-IN').format(n);
 }
 
 export function formatPct(n: number): string {
-  const sign = n >= 0 ? "+" : "";
+  const sign = n >= 0 ? '+' : '';
   return `${sign}${n.toFixed(2)}%`;
 }
 
 export function formatLargeNumber(n: number): string {
-  if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + "B";
-  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
-  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + "K";
+  if (Math.abs(n) >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B';
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toFixed(0);
 }
 

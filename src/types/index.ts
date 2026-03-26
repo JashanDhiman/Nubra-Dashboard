@@ -5,7 +5,30 @@ export interface NubraAuthRequest {
 }
 
 export interface NubraAuthResponse {
-  status: "success" | "error";
+  status: 'success' | 'error';
+  session_token: string;
+  expires_at: string;
+  message?: string;
+}
+
+// Step 1: POST /totp/login → may require TOTP verification
+export interface NubraTotpLoginResponse {
+  status: 'success' | 'error' | 'totp_required';
+  requires_totp?: boolean;
+  message?: string;
+  // If the API returns a session directly without TOTP (some implementations)
+  session_token?: string;
+  expires_at?: string;
+}
+
+// Step 2: POST /totp/verify → final session token
+export interface NubraTotpVerifyRequest {
+  client_id: string;
+  totp: string;
+}
+
+export interface NubraTotpVerifyResponse {
+  status: 'success' | 'error';
   session_token: string;
   expires_at: string;
   message?: string;
@@ -19,11 +42,11 @@ export interface SessionState {
 
 // ─── MARKET DATA ─────────────────────────────────────────────────────────────
 export interface Greeks {
-  iv: number;        // Implied Volatility (%)
-  delta: number;     // Delta
-  gamma: number;     // Gamma
-  theta: number;     // Theta (daily)
-  vega: number;      // Vega
+  iv: number; // Implied Volatility (%)
+  delta: number; // Delta
+  gamma: number; // Gamma
+  theta: number; // Theta (daily)
+  vega: number; // Vega
 }
 
 export interface MarketDepthLevel {
@@ -33,7 +56,7 @@ export interface MarketDepthLevel {
 }
 
 export interface MarketDepth {
-  bids: MarketDepthLevel[];  // Up to 20 levels
+  bids: MarketDepthLevel[]; // Up to 20 levels
   asks: MarketDepthLevel[];
 }
 
@@ -66,9 +89,9 @@ export interface OptionChainRow {
   call: OptionLeg;
   put: OptionLeg;
   isATM: boolean;
-  pcr: number;           // Put-Call OI Ratio for this strike
+  pcr: number; // Put-Call OI Ratio for this strike
   netOI: number;
-  gex: number;           // Gamma Exposure at this strike
+  gex: number; // Gamma Exposure at this strike
   maxPainWeight: number;
 }
 
@@ -83,14 +106,14 @@ export interface OptionChainSnapshot {
   total_put_oi: number;
   pcr: number;
   max_pain: number;
-  iv_rank: number;       // IVR
+  iv_rank: number; // IVR
   iv_percentile: number; // IVP
   rows: OptionChainRow[];
   timestamp: string;
 }
 
 // ─── WEBSOCKET TICK ──────────────────────────────────────────────────────────
-export type WsMode = "ltp" | "quote" | "full" | "greeks";
+export type WsMode = 'ltp' | 'quote' | 'full' | 'greeks';
 
 export interface WsTick {
   instrument_token: string;
@@ -108,39 +131,44 @@ export interface WsTick {
 }
 
 export interface WsSubscribeMessage {
-  type: "subscribe" | "unsubscribe" | "mode";
+  type: 'subscribe' | 'unsubscribe' | 'mode';
   tokens?: string[];
   mode?: WsMode;
 }
 
 export interface WsServerMessage {
-  type: "ticks" | "connected" | "error" | "pong";
+  type: 'ticks' | 'connected' | 'error' | 'pong';
   data?: WsTick[];
   message?: string;
 }
 
 // ─── ORDER ───────────────────────────────────────────────────────────────────
-export type OrderSide = "BUY" | "SELL";
-export type OrderType = "MARKET" | "LIMIT" | "SL" | "SL-M";
-export type ProductType = "MIS" | "NRML" | "CNC";
-export type OrderStatus = "PENDING" | "OPEN" | "COMPLETE" | "REJECTED" | "CANCELLED";
+export type OrderSide = 'BUY' | 'SELL';
+export type OrderType = 'MARKET' | 'LIMIT' | 'SL' | 'SL-M';
+export type ProductType = 'MIS' | 'NRML' | 'CNC';
+export type OrderStatus =
+  | 'PENDING'
+  | 'OPEN'
+  | 'COMPLETE'
+  | 'REJECTED'
+  | 'CANCELLED';
 
 export interface PlaceOrderRequest {
   trading_symbol: string;
   instrument_token: string;
-  exchange: "NFO" | "BSE" | "NSE";
+  exchange: 'NFO' | 'BSE' | 'NSE';
   transaction_type: OrderSide;
   order_type: OrderType;
   product: ProductType;
   quantity: number;
   price?: number;
   trigger_price?: number;
-  validity: "DAY" | "IOC";
+  validity: 'DAY' | 'IOC';
   tag?: string;
 }
 
 export interface PlaceOrderResponse {
-  status: "success" | "error";
+  status: 'success' | 'error';
   order_id?: string;
   message: string;
 }
@@ -161,25 +189,25 @@ export interface Order {
 }
 
 // ─── UI STATE ─────────────────────────────────────────────────────────────────
-export type ActiveTab = "oi" | "iv" | "gex" | "order" | "depth";
-export type Underlying = "NIFTY" | "BANKNIFTY" | "FINNIFTY" | "MIDCPNIFTY";
+export type ActiveTab = 'oi' | 'iv' | 'gex' | 'order' | 'depth';
+export type Underlying = 'NIFTY' | 'BANKNIFTY' | 'FINNIFTY' | 'MIDCPNIFTY';
 
 export interface DashboardFilter {
   underlying: Underlying;
   expiry: string;
-  strikeRange: number;  // number of strikes above/below ATM
+  strikeRange: number; // number of strikes above/below ATM
   showGreeks: boolean;
   showDepth: boolean;
 }
 
 export interface ConnectionStatus {
-  ws: "connecting" | "connected" | "disconnected" | "error";
-  rest: "idle" | "loading" | "success" | "error";
-  auth: "unauthenticated" | "authenticating" | "authenticated" | "expired";
+  ws: 'connecting' | 'connected' | 'disconnected' | 'error';
+  rest: 'idle' | 'loading' | 'success' | 'error';
+  auth: 'unauthenticated' | 'authenticating' | 'authenticated' | 'expired';
 }
 
 export interface FlashState {
-  [instrumentToken: string]: "up" | "down" | null;
+  [instrumentToken: string]: 'up' | 'down' | null;
 }
 
 // ─── CHART DATA ───────────────────────────────────────────────────────────────

@@ -3,8 +3,8 @@
  * Central state for option chain data, WebSocket ticks, filters, UI state
  */
 
-import { create } from "zustand";
-import { subscribeWithSelector } from "zustand/middleware";
+import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 import {
   OptionChainSnapshot,
   OptionChainRow,
@@ -15,8 +15,8 @@ import {
   ActiveTab,
   Underlying,
   Order,
-} from "@/types";
-import { calculateMaxPain, calculatePCR, calculateGEX } from "@/lib/analytics";
+} from '@/types';
+import { calculateMaxPain, calculatePCR, calculateGEX } from '@/lib/analytics';
 
 interface DashboardStore {
   // ── Snapshot ───────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ interface DashboardStore {
   activeTab: ActiveTab;
   flashState: FlashState;
   selectedStrike: number | null;
-  selectedSide: "call" | "put" | null;
+  selectedSide: 'call' | 'put' | null;
 
   // ── Derived metrics ────────────────────────────────────────────────────────
   maxPain: number;
@@ -52,14 +52,14 @@ interface DashboardStore {
   setFilter: (filter: Partial<DashboardFilter>) => void;
   setConnectionStatus: (status: Partial<ConnectionStatus>) => void;
   setActiveTab: (tab: ActiveTab) => void;
-  selectStrike: (strike: number, side: "call" | "put") => void;
+  selectStrike: (strike: number, side: 'call' | 'put') => void;
   setExpiries: (expiries: string[]) => void;
   setOrders: (orders: Order[]) => void;
 }
 
 const defaultFilter: DashboardFilter = {
-  underlying: "NIFTY",
-  expiry: "",
+  underlying: 'NIFTY',
+  expiry: '',
   strikeRange: 15,
   showGreeks: false,
   showDepth: false,
@@ -73,11 +73,11 @@ export const useDashboardStore = create<DashboardStore>()(
     expiries: [],
     filter: defaultFilter,
     connectionStatus: {
-      ws: "disconnected",
-      rest: "idle",
-      auth: "unauthenticated",
+      ws: 'disconnected',
+      rest: 'idle',
+      auth: 'unauthenticated',
     },
-    activeTab: "oi",
+    activeTab: 'oi',
     flashState: {},
     selectedStrike: null,
     selectedSide: null,
@@ -87,7 +87,7 @@ export const useDashboardStore = create<DashboardStore>()(
     lastUpdateTime: null,
     orders: [],
 
-    setSnapshot: (snapshot) => {
+    setSnapshot: snapshot => {
       const maxPain = calculateMaxPain(snapshot.rows);
       const pcr = calculatePCR(snapshot.rows);
 
@@ -102,7 +102,7 @@ export const useDashboardStore = create<DashboardStore>()(
           : 50;
 
       const filteredRows = snapshot.rows.filter(
-        (r) =>
+        r =>
           r.strike >= atm - strikeRange * step &&
           r.strike <= atm + strikeRange * step
       );
@@ -118,12 +118,12 @@ export const useDashboardStore = create<DashboardStore>()(
       });
     },
 
-    applyTick: (tick) => {
+    applyTick: tick => {
       const { rows, snapshot } = get();
       if (!snapshot) return;
 
       // Find which row this tick belongs to
-      const newRows = rows.map((row) => {
+      const newRows = rows.map(row => {
         let updated = false;
         let updatedRow = { ...row };
 
@@ -145,7 +145,7 @@ export const useDashboardStore = create<DashboardStore>()(
           };
 
           // Flash state
-          const direction = (tick.ltp ?? prevLTP) > prevLTP ? "up" : "down";
+          const direction = (tick.ltp ?? prevLTP) > prevLTP ? 'up' : 'down';
           scheduleFlash(tick.instrument_token, direction, set);
           updated = true;
         }
@@ -166,7 +166,7 @@ export const useDashboardStore = create<DashboardStore>()(
               exchange_timestamp: tick.exchange_timestamp,
             },
           };
-          const direction = (tick.ltp ?? prevLTP) > prevLTP ? "up" : "down";
+          const direction = (tick.ltp ?? prevLTP) > prevLTP ? 'up' : 'down';
           scheduleFlash(tick.instrument_token, direction, set);
           updated = true;
         }
@@ -180,7 +180,7 @@ export const useDashboardStore = create<DashboardStore>()(
         newRows.length > 1 ? newRows[1].strike - newRows[0].strike : 50;
 
       const filteredRows = newRows.filter(
-        (r) =>
+        r =>
           r.strike >= atm - strikeRange * step &&
           r.strike <= atm + strikeRange * step
       );
@@ -192,7 +192,7 @@ export const useDashboardStore = create<DashboardStore>()(
       });
     },
 
-    setFilter: (partial) => {
+    setFilter: partial => {
       const filter = { ...get().filter, ...partial };
       const { rows, snapshot } = get();
 
@@ -205,7 +205,7 @@ export const useDashboardStore = create<DashboardStore>()(
       const step = rows.length > 1 ? rows[1].strike - rows[0].strike : 50;
 
       const filteredRows = rows.filter(
-        (r) =>
+        r =>
           r.strike >= atm - filter.strikeRange * step &&
           r.strike <= atm + filter.strikeRange * step
       );
@@ -213,40 +213,40 @@ export const useDashboardStore = create<DashboardStore>()(
       set({ filter, filteredRows });
     },
 
-    setConnectionStatus: (partial) => {
-      set((s) => ({
+    setConnectionStatus: partial => {
+      set(s => ({
         connectionStatus: { ...s.connectionStatus, ...partial },
       }));
     },
 
-    setActiveTab: (tab) => set({ activeTab: tab }),
+    setActiveTab: tab => set({ activeTab: tab }),
 
     selectStrike: (strike, side) =>
       set({ selectedStrike: strike, selectedSide: side }),
 
-    setExpiries: (expiries) => {
+    setExpiries: expiries => {
       set({ expiries });
       if (expiries.length > 0 && !get().filter.expiry) {
-        set((s) => ({ filter: { ...s.filter, expiry: expiries[0] } }));
+        set(s => ({ filter: { ...s.filter, expiry: expiries[0] } }));
       }
     },
 
-    setOrders: (orders) => set({ orders }),
+    setOrders: orders => set({ orders }),
   }))
 );
 
 // Flash helper — clears flash after 400ms
 function scheduleFlash(
   token: string,
-  direction: "up" | "down",
+  direction: 'up' | 'down',
   set: (partial: Partial<DashboardStore>) => void
 ) {
-  set((s: DashboardStore) => ({
-    flashState: { ...s.flashState, [token]: direction },
-  }));
-  setTimeout(() => {
-    set((s: DashboardStore) => ({
-      flashState: { ...s.flashState, [token]: null },
-    }));
-  }, 400);
+  //set((s: DashboardStore) => ({
+  //  flashState: { ...s.flashState, [token]: direction },
+  //}));
+  //setTimeout(() => {
+  //  set((s: DashboardStore) => ({
+  //    flashState: { ...s.flashState, [token]: null },
+  //  }));
+  //}, 400);
 }

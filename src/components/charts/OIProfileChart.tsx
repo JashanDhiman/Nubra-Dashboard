@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,9 +10,9 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Cell,
-} from "recharts";
-import { useDashboardStore } from "@/lib/store";
-import { toOIChartData } from "@/lib/analytics";
+} from 'recharts';
+import { useDashboardStore } from '@/lib/store';
+import { toOIChartData } from '@/lib/analytics';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -48,34 +48,49 @@ export function OIProfileChart() {
           Put OI
         </span>
         <span className="ml-auto text-[10px]">
-          ATM: {snapshot.atm_strike.toLocaleString("en-IN")}
+          ATM: {snapshot.atm_strike.toLocaleString('en-IN')}
         </span>
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} barCategoryGap="20%" barGap={1}>
           <XAxis
             dataKey="strike"
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }}
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(v) => `${v}K`}
+            tickFormatter={v => `${v}K`}
             width={36}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+          />
           <ReferenceLine
             x={snapshot.atm_strike}
             stroke="#00d97e"
             strokeDasharray="3 3"
             strokeWidth={1}
           />
-          <Bar dataKey="callOI" name="Call OI" fill="#2d9cf0" opacity={0.8} radius={[2, 2, 0, 0]} />
-          <Bar dataKey="putOI" name="Put OI" fill="#ff4560" opacity={0.8} radius={[2, 2, 0, 0]} />
+          <Bar
+            dataKey="callOI"
+            name="Call OI"
+            fill="#2d9cf0"
+            opacity={0.8}
+            radius={[2, 2, 0, 0]}
+          />
+          <Bar
+            dataKey="putOI"
+            name="Put OI"
+            fill="#ff4560"
+            opacity={0.8}
+            radius={[2, 2, 0, 0]}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -90,22 +105,50 @@ export function OIChangeChart() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-[10px] font-mono text-text-muted">OI Build-up / Unwinding (K)</div>
+      <div className="text-[10px] font-mono text-text-muted">
+        OI Build-up / Unwinding (K)
+      </div>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} barCategoryGap="20%" barGap={1}>
-          <XAxis dataKey="strike" tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-          <YAxis tick={{ fill: "#3d5570", fontSize: 9, fontFamily: "IBM Plex Mono" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}K`} width={36} />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
+          <XAxis
+            dataKey="strike"
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={v => `${v}K`}
+            width={36}
+          />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+          />
           <ReferenceLine y={0} stroke="#3d5570" strokeWidth={0.5} />
-          <ReferenceLine x={snapshot.atm_strike} stroke="#00d97e" strokeDasharray="3 3" strokeWidth={1} />
+          <ReferenceLine
+            x={snapshot.atm_strike}
+            stroke="#00d97e"
+            strokeDasharray="3 3"
+            strokeWidth={1}
+          />
           <Bar dataKey="callOIChange" name="Call Chg" radius={[2, 2, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.callOIChange >= 0 ? "#2d9cf0" : "#2d9cf066"} />
+              <Cell
+                key={i}
+                fill={entry.callOIChange >= 0 ? '#2d9cf0' : '#2d9cf066'}
+              />
             ))}
           </Bar>
           <Bar dataKey="putOIChange" name="Put Chg" radius={[2, 2, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={entry.putOIChange >= 0 ? "#ff4560" : "#ff456066"} />
+              <Cell
+                key={i}
+                fill={entry.putOIChange >= 0 ? '#ff4560' : '#ff456066'}
+              />
             ))}
           </Bar>
         </BarChart>
