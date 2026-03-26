@@ -2,73 +2,68 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function Header() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    // Check authentication status
-    const sessionToken = localStorage.getItem('sessionToken');
-    setIsAuthenticated(!!sessionToken);
-  }, []);
+  const { isAuthenticated, logout } = useAuth();
 
   const handleLogout = () => {
-    // Clear session
-    localStorage.removeItem('sessionToken');
-    localStorage.removeItem('userId');
-    setIsAuthenticated(false);
-    router.push('/');
+    // Use the logout function from AuthContext
+    logout();
+
+    // Redirect to login page
+    router.push('/login');
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-6">
-        <div className="flex justify-between items-center">
-          {/* Logo and Navigation */}
-          <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-bold text-gray-900">
-              Nubra Dashboard
-            </Link>
-
-            {isAuthenticated && (
-              <nav className="ml-10 flex items-baseline space-x-4">
-                <Link
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/historical-data"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Historical Data
-                </Link>
-              </nav>
-            )}
-          </div>
-
-          {/* User Actions */}
-          <div className="flex items-center">
-            {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md text-sm font-medium"
-              >
-                Logout
-              </button>
-            ) : (
-              <Link
-                href="/"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md text-sm font-medium"
-              >
-                Login
-              </Link>
-            )}
-          </div>
+    <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface-1">
+      {/* Brand and Navigation */}
+      <div className="flex items-center gap-6">
+        {/* Brand */}
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse-dot" />
+          <Link href="/dashboard" className="font-mono text-sm tracking-wider text-text-primary uppercase font-medium">
+            Nubra Dashboard
+          </Link>
         </div>
+
+        {/* Navigation */}
+        {isAuthenticated && (
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/dashboard"
+              className="px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors text-text-secondary hover:text-text-primary hover:bg-surface-3"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/historical-data"
+              className="px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors text-text-secondary hover:text-text-primary hover:bg-surface-3"
+            >
+              Historical Data
+            </Link>
+          </nav>
+        )}
+      </div>
+
+      {/* User Actions */}
+      <div className="flex items-center">
+        {isAuthenticated ? (
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors text-text-secondary hover:text-text-primary hover:bg-surface-3 border border-border hover:border-accent-muted"
+          >
+            Logout
+          </button>
+        ) : (
+          <Link
+            href="/"
+            className="px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors bg-accent-muted text-text-primary hover:bg-accent-muted/80"
+          >
+            Login
+          </Link>
+        )}
       </div>
     </header>
   );

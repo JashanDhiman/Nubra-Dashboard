@@ -12,6 +12,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { NubraWebSocketManager } from '@/lib/websocket-manager';
 import { useDashboardStore } from '@/lib/store';
 import { OptionChainSnapshot, WsTick } from '@/types';
+import { useAuthentication } from './useAuthentication';
 
 const POLL_INTERVAL = 30_000; // 30s REST fallback polling
 const MOCK_TICK_INTERVAL = 700; // ms between simulated ticks
@@ -76,6 +77,11 @@ function startMockTicks(
 }
 
 export function useLiveOptionChain() {
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    error: authError,
+  } = useAuthentication();
   const wsManager = useRef<NubraWebSocketManager | null>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const mockTickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -86,6 +92,12 @@ export function useLiveOptionChain() {
   // ── Step 3: Bootstrap with REST snapshot ──────────────────────────────────
   const fetchSnapshot = useCallback(async () => {
     if (!filter.expiry) return;
+
+    // Don't fetch if not authenticated
+    if (!isAuthenticated) {
+      console.log('[useLiveOptionChain] Not authenticated, skipping fetch');
+      return;
+    }
 
     setConnectionStatus({ rest: 'loading' });
     try {
@@ -111,10 +123,24 @@ export function useLiveOptionChain() {
       console.error('[useLiveOptionChain] REST fetch failed:', err);
       setConnectionStatus({ rest: 'error' });
     }
-  }, [filter.underlying, filter.expiry, setSnapshot, setConnectionStatus]);
+  }, [
+    filter.underlying,
+    filter.expiry,
+    setSnapshot,
+    setConnectionStatus,
+    isAuthenticated,
+  ]);
 
   // ── Fetch expiry list ─────────────────────────────────────────────────────
   const fetchExpiries = useCallback(async () => {
+    // Don't fetch if not authenticated
+    if (!isAuthenticated) {
+      console.log(
+        '[useLiveOptionChain] Not authenticated, skipping expiry fetch'
+      );
+      return;
+    }
+
     try {
       const sessionToken = localStorage.getItem('sessionToken');
       const headers: Record<string, string> = {
@@ -136,7 +162,7 @@ export function useLiveOptionChain() {
     } catch (err) {
       console.error('[useLiveOptionChain] Expiry fetch failed:', err);
     }
-  }, [filter.underlying, setExpiries]);
+  }, [filter.underlying, setExpiries, isAuthenticated]);
 
   const stopMockTicks = useCallback(() => {
     if (mockTickTimer.current) {
@@ -207,12 +233,24 @@ export function useLiveOptionChain() {
     let cancelled = false;
 
     async function init() {
-      // Check if user is authenticated
-      const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
+      // Use authentication state from hook
+      if (authLoading) {
+        console.log('[useLiveOptionChain] Authentication loading...');
+        return;
+      }
+
+      if (authError) {
+        console.error('[useLiveOptionChain] Authentication error:', authError);
         setConnectionStatus({ auth: 'unauthenticated' });
         return;
       }
+
+      if (!isAuthenticated) {
+        console.log('[useLiveOptionChain] Not authenticated');
+        setConnectionStatus({ auth: 'unauthenticated' });
+        return;
+      }
+
       setConnectionStatus({ auth: 'authenticated' });
 
       if (cancelled) return;
@@ -232,7 +270,13 @@ export function useLiveOptionChain() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter.underlying, filter.expiry]);
+  }, [
+    filter.underlying,
+    filter.expiry,
+    isAuthenticated,
+    authLoading,
+    authError,
+  ]);
 
   useEffect(() => {
     fetchExpiries();

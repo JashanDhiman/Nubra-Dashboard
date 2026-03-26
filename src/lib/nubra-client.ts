@@ -5,30 +5,124 @@ let sessionToken: string | null = null;
 let tokenExpiry: number | null = null;
 
 export const generateTOTP = () => {
-  return speakeasy.totp({
-    secret: process.env.NUBRA_TOTP_SECRET!,
-    encoding: 'base32',
-  });
+  const secret = process.env.NUBRA_TOTP_SECRET;
+
+  if (!secret) {
+    throw new Error('NUBRA_TOTP_SECRET environment variable is not set');
+  }
+
+  try {
+    // Try different encoding methods based on secret format
+    let totp;
+
+    // Check if secret looks like base32 (contains only base32 characters)
+    if (/^[A-Z2-7]+=*$/.test(secret.toUpperCase())) {
+      totp = speakeasy.totp({
+        secret: secret,
+        encoding: 'base32',
+      });
+    } else {
+      // Try as ascii/utf8 string
+      totp = speakeasy.totp({
+        secret: secret,
+        encoding: 'ascii',
+      });
+    }
+
+    return totp;
+  } catch (error) {
+    console.error('TOTP generation failed:', error);
+    throw new Error(
+      `Failed to generate TOTP: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
 };
 
 export const authenticateNubra = async () => {
-  const totp = generateTOTP();
-  console.log('totp', totp);
+  try {
+    const totp = generateTOTP();
+    console.log('Generated TOTP:', totp);
 
-  const res = await axios.post(`${process.env.NUBRA_BASE_URL}/auth`, {
-    client_id: process.env.NUBRA_CLIENT_ID,
-    mpin: process.env.NUBRA_MPIN,
-    totp,
-  });
+    // Validate environment variables
+    const email = process.env.NUBRA_EMAIL;
+    const deviceId = process.env.NUBRA_DEVICE_ID || 'dashboard-device';
 
-  console.log('res', res.data);
+    if (!email) {
+      throw new Error('NUBRA_EMAIL environment variable is not set');
+    }
 
-  sessionToken = res.data.session_token;
+    // Step 1: TOTP Login to get auth_token
+    console.log('Step 1: Attempting TOTP login...');
+    const totpResponse = await fetch('https://api.nubra.io/totp/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-device-id': deviceId,
+      },
+      body: JSON.stringify({
+        email: email,
+        totp: parseInt(totp, 10), // Convert string TOTP to number
+      }),
+    });
 
-  // assuming expiry in seconds (adjust based on API)
-  tokenExpiry = Date.now() + 50 * 60 * 1000;
+    if (!totpResponse.ok) {
+      const errorText = await totpResponse.text();
+      console.error('TOTP login failed:', totpResponse.status, errorText);
+      throw new Error(
+        `TOTP login failed (${totpResponse.status}): ${errorText}`
+      );
+    }
 
-  return sessionToken;
+    const totpData = await totpResponse.json();
+    console.log('TOTP login successful:', totpData);
+
+    if (!totpData.auth_token) {
+      throw new Error('No auth_token received from TOTP login');
+    }
+
+    // Step 2: Verify MPIN to get session_token
+    console.log('Step 2: Verifying MPIN...');
+    const verifyResponse = await fetch('https://api.nubra.io/verifypin', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${totpData.auth_token}`,
+        'x-device-id': deviceId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pin: process.env.NUBRA_MPIN,
+      }),
+    });
+
+    if (!verifyResponse.ok) {
+      const errorText = await verifyResponse.text();
+      console.error(
+        'MPIN verification failed:',
+        verifyResponse.status,
+        errorText
+      );
+      throw new Error(
+        `MPIN verification failed (${verifyResponse.status}): ${errorText}`
+      );
+    }
+
+    const verifyData = await verifyResponse.json();
+    console.log('MPIN verification successful:', verifyData);
+
+    if (!verifyData.session_token) {
+      throw new Error('No session_token received from MPIN verification');
+    }
+
+    sessionToken = verifyData.session_token;
+    // assuming expiry in seconds (adjust based on API)
+    tokenExpiry = Date.now() + 50 * 60 * 1000;
+
+    console.log('Authentication complete, session token stored');
+    return sessionToken;
+  } catch (error) {
+    console.error('Authentication failed:', error);
+    throw error; // Re-throw to let the calling component handle it
+  }
 };
 
 export const setSessionToken = (token: string) => {

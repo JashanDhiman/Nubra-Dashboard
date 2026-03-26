@@ -267,7 +267,9 @@ export function generateMockSnapshot(
 export function isMockMode(): boolean {
   return false;
   return (
-    !process.env.NUBRA_API_KEY ||
-    process.env.NUBRA_API_KEY === 'your_client_id_here'
+    !process.env.NUBRA_EMAIL ||
+    !process.env.NUBRA_TOTP_SECRET ||
+    !process.env.NUBRA_MPIN ||
+    process.env.NUBRA_EMAIL === 'your_email@example.com'
   );
 }

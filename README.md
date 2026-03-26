@@ -77,9 +77,11 @@ cp .env.local .env.local
 ```
 
 ```env
-NUBRA_API_KEY=your_client_id
+NUBRA_EMAIL=your_email@example.com
+NUBRA_TOTP_SECRET=your_totp_secret_base32
 NUBRA_MPIN=your_mpin
-NUBRA_BASE_URL=https://api.nubra.in/v1
+NUBRA_DEVICE_ID=your_device_id
+NUBRA_BASE_URL=https://api.nubra.io
 NUBRA_WS_URL=wss://stream.nubra.in/v1/ws
 ```
 
@@ -229,9 +231,11 @@ CMD ["npm", "start"]
 Set these in your deployment platform (Vercel, Railway, etc.):
 
 ```
-NUBRA_API_KEY=...
+NUBRA_EMAIL=...
+NUBRA_TOTP_SECRET=...
 NUBRA_MPIN=...
-NUBRA_BASE_URL=https://api.nubra.in/v1
+NUBRA_DEVICE_ID=...
+NUBRA_BASE_URL=https://api.nubra.io
 NUBRA_WS_URL=wss://stream.nubra.in/v1/ws
 ```
 

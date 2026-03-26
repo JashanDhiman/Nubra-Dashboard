@@ -1,7 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
+import { HistoricalDataDisplay } from '@/components/HistoricalDataDisplay';
+import { MultiSelect } from '@/components/MultiSelect';
+import { useAuth } from '@/contexts/AuthContext';
+
+const FIELD_OPTIONS = [
+  "open", "high", "low", "close", "tick_volume", "cumulative_volume",
+  "cumulative_volume_premium", "cumulative_oi", "cumulative_call_oi",
+  "cumulative_put_oi", "cumulative_fut_oi", "l1bid", "l1ask", "theta",
+  "delta", "gamma", "vega", "iv_bid", "iv_ask", "iv_mid", "cumulative_volume_delta"
+];
 
 interface HistoricalQuery {
   exchange: string;
@@ -26,6 +37,8 @@ interface HistoricalData {
 }
 
 export default function HistoricalDataPage() {
+  const { isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const router = useRouter();
   const [query, setQuery] = useState<HistoricalQuery>({
     exchange: 'NSE',
     type: 'STOCK',
@@ -40,17 +53,70 @@ export default function HistoricalDataPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-2">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="mt-2 text-muted-foreground">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if authentication failed
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-2">
+        <div className="text-center max-w-md p-6 bg-surface-1 rounded-lg shadow border border-border">
+          <p className="text-destructive mb-4">Authentication failed: {authError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Retry Authentication
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    // Check authentication state
+    if (authLoading) {
+      setError('Authentication in progress...');
+      return;
+    }
+
+    if (authError) {
+      setError(`Authentication error: ${authError}`);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setError('Please login first');
+      return;
+    }
+
     try {
       const sessionToken = localStorage.getItem('sessionToken');
-      if (!sessionToken) {
-        setError('Please login first');
-        return;
-      }
 
       const response = await fetch('/api/nubra/historical-data', {
         method: 'POST',
@@ -79,214 +145,192 @@ export default function HistoricalDataPage() {
     return new Date(nanoseconds / 1_000_000).toLocaleString();
   };
 
-  const renderData = () => {
-    if (!data || !data.result.length) return null;
-
-    const result = data.result[0];
-    const symbol = Object.keys(result.values[0])[0];
-    const symbolData = result.values[0][symbol];
-
-    return (
-      <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-4">
-          {result.exchange} - {symbol} ({result.type})
-        </h3>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {Object.entries(symbolData).map(([field, points]) => (
-            <div key={field} className="bg-white p-4 rounded-lg shadow">
-              <h4 className="font-medium mb-2 capitalize">{field}</h4>
-              <div className="max-h-64 overflow-y-auto">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-2 py-1 text-left">Time</th>
-                      <th className="px-2 py-1 text-left">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {points.slice(0, 10).map((point, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="px-2 py-1">
-                          {formatTimestamp(point.ts)}
-                        </td>
-                        <td className="px-2 py-1">{point.v}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {points.length > 10 && (
-                  <p className="text-xs text-gray-500 mt-2">
-                    Showing first 10 of {points.length} points
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface overflow-hidden">
       <Header />
 
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">
-            Historical Market Data
-          </h1>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Exchange */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Exchange
-                </label>
-                <select
-                  value={query.exchange}
-                  onChange={e =>
-                    setQuery({ ...query, exchange: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="NSE">NSE</option>
-                  <option value="BSE">BSE</option>
-                </select>
-              </div>
-
-              {/* Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type
-                </label>
-                <select
-                  value={query.type}
-                  onChange={e => setQuery({ ...query, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="STOCK">Stock</option>
-                  <option value="INDEX">Index</option>
-                  <option value="OPT">Options</option>
-                  <option value="FUT">Futures</option>
-                </select>
-              </div>
-
-              {/* Symbols */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Symbols (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={query.values.join(', ')}
-                  onChange={e =>
-                    setQuery({
-                      ...query,
-                      values: e.target.value.split(',').map(s => s.trim()),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="ASIANPAINT, NIFTY, RELIANCE"
-                />
-              </div>
-
-              {/* Fields */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fields (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={query.fields.join(', ')}
-                  onChange={e =>
-                    setQuery({
-                      ...query,
-                      fields: e.target.value.split(',').map(s => s.trim()),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="value, open, high, low, close, volume"
-                />
-              </div>
-
-              {/* Interval */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Interval
-                </label>
-                <select
-                  value={query.interval}
-                  onChange={e =>
-                    setQuery({ ...query, interval: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="1s">1 second</option>
-                  <option value="1m">1 minute</option>
-                  <option value="5m">5 minutes</option>
-                  <option value="15m">15 minutes</option>
-                  <option value="30m">30 minutes</option>
-                  <option value="1h">1 hour</option>
-                  <option value="1d">1 day</option>
-                </select>
-              </div>
-
-              {/* Start Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={query.startDate.slice(0, 16)}
-                  onChange={e =>
-                    setQuery({
-                      ...query,
-                      startDate: new Date(e.target.value).toISOString(),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* End Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={query.endDate.slice(0, 16)}
-                  onChange={e =>
-                    setQuery({
-                      ...query,
-                      endDate: new Date(e.target.value).toISOString(),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+      <div className="h-[calc(100vh-64px)] overflow-y-auto">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          {/* Query Form Section */}
+          <div className="bg-surface-1 rounded-lg border border-border p-4 mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse-dot" />
+              <h2 className="text-sm font-semibold text-foreground font-mono uppercase tracking-wider">
+                Query Parameters
+              </h2>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium disabled:opacity-50"
-            >
-              {loading ? 'Fetching...' : 'Fetch Data'}
-            </button>
-          </form>
+            <form onSubmit={handleSubmit} className="space-y-2">
+              {/* Basic Settings Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Exchange
+                  </label>
+                  <select
+                    value={query.exchange}
+                    onChange={e =>
+                      setQuery({ ...query, exchange: e.target.value })
+                    }
+                    className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
+                  >
+                    <option value="NSE">NSE</option>
+                    <option value="BSE">BSE</option>
+                  </select>
+                </div>
 
-          {error && (
-            <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Instrument Type
+                  </label>
+                  <select
+                    value={query.type}
+                    onChange={e => setQuery({ ...query, type: e.target.value })}
+                    className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
+                  >
+                    <option value="STOCK">Stock</option>
+                    <option value="INDEX">Index</option>
+                    <option value="OPT">Options</option>
+                    <option value="FUT">Futures</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Interval
+                  </label>
+                  <select
+                    value={query.interval}
+                    onChange={e =>
+                      setQuery({ ...query, interval: e.target.value })
+                    }
+                    className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
+                  >
+                    <option value="1s">1 second</option>
+                    <option value="1m">1 minute</option>
+                    <option value="5m">5 minutes</option>
+                    <option value="15m">15 minutes</option>
+                    <option value="30m">30 minutes</option>
+                    <option value="1h">1 hour</option>
+                    <option value="1d">1 day</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Symbols and Fields Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Symbols
+                  </label>
+                  <input
+                    type="text"
+                    value={query.values.join(', ')}
+                    onChange={e =>
+                      setQuery({
+                        ...query,
+                        values: e.target.value.split(',').map(s => s.trim()),
+                      })
+                    }
+                    className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
+                    placeholder="ASIANPAINT, NIFTY, RELIANCE"
+                  />
+                  <p className="text-xs text-text-muted">
+                    Enter symbols separated by commas
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Data Fields
+                  </label>
+                  <MultiSelect
+                    value={query.fields}
+                    onChange={(fields) => setQuery({ ...query, fields })}
+                    options={FIELD_OPTIONS}
+                    placeholder="Select data fields..."
+                    className="w-full"
+                  />
+                  <p className="text-xs text-text-muted">
+                    Choose multiple fields to retrieve
+                  </p>
+                </div>
+              </div>
+
+              {/* Date Range Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Start Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={query.startDate.slice(0, 16)}
+                    onChange={e =>
+                      setQuery({
+                        ...query,
+                        startDate: new Date(e.target.value).toISOString(),
+                      })
+                    }
+                    className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    End Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={query.endDate.slice(0, 16)}
+                    onChange={e =>
+                      setQuery({
+                        ...query,
+                        endDate: new Date(e.target.value).toISOString(),
+                      })
+                    }
+                    className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                <div className="text-xs text-text-muted">
+                  Configure your query parameters above and click fetch to retrieve data
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-3 py-1.5 rounded text-xs font-mono font-medium transition-colors bg-accent-muted text-text-primary hover:bg-accent-muted/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-3 h-3 border border-text-primary/30 border-t-text-primary rounded-full animate-spin" />
+                      Fetching...
+                    </>
+                  ) : (
+                    <>
+                      Fetch Data
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {error && (
+              <div className="mt-4 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded font-mono text-sm">
+                <span className="font-semibold">Error:</span> {error}
+              </div>
+            )}
+          </div>
+
+          {/* Results Section */}
+          {data && (
+            <div className="bg-surface-1 rounded-lg border border-border overflow-hidden">
+              <HistoricalDataDisplay data={data} />
             </div>
           )}
-
-          {data && renderData()}
         </div>
       </div>
     </div>
