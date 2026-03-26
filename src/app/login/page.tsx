@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
-  const { isAuthenticated, isLoading: authLoading, error: authError, retryAuthentication } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    error: authError,
+    retryAuthentication,
+  } = useAuth();
   const router = useRouter();
   const [isManualLogin, setIsManualLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,13 +53,17 @@ export default function LoginPage() {
           {authLoading && (
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Authenticating with TOTP...</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Authenticating with TOTP...
+              </p>
             </div>
           )}
 
           {authError && (
             <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4">
-              <p className="text-sm text-destructive">Authentication failed: {authError}</p>
+              <p className="text-sm text-destructive">
+                Authentication failed: {authError}
+              </p>
             </div>
           )}
 
@@ -79,7 +88,8 @@ export default function LoginPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Click the button below to authenticate using your TOTP credentials
+                  Click the button below to authenticate using your TOTP
+                  credentials
                 </p>
               </div>
 

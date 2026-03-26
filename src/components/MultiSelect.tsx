@@ -10,14 +10,23 @@ interface MultiSelectProps {
   className?: string;
 }
 
-export function MultiSelect({ value, onChange, options, placeholder = "Select options...", className = "" }: MultiSelectProps) {
+export function MultiSelect({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select options...',
+  className = '',
+}: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -50,14 +59,14 @@ export function MultiSelect({ value, onChange, options, placeholder = "Select op
         {value.length === 0 ? (
           <span className="text-text-muted">{placeholder}</span>
         ) : (
-          value.map((item) => (
+          value.map(item => (
             <span
               key={item}
               className="px-1.5 py-0.5 bg-accent-muted/20 text-accent-green rounded text-xs font-mono flex items-center gap-1"
             >
               {item}
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   removeOption(item);
                 }}
@@ -74,7 +83,7 @@ export function MultiSelect({ value, onChange, options, placeholder = "Select op
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-surface-1 border border-border rounded shadow-lg max-h-48 overflow-y-auto">
           <div className="p-1">
-            {options.map((option) => (
+            {options.map(option => (
               <div
                 key={option}
                 onClick={() => toggleOption(option)}
@@ -83,10 +92,16 @@ export function MultiSelect({ value, onChange, options, placeholder = "Select op
                 <input
                   type="checkbox"
                   checked={value.includes(option)}
-                  onChange={() => { }}
+                  onChange={() => {}}
                   className="w-3 h-3 text-primary bg-surface-2 border-border rounded focus:ring-primary"
                 />
-                <span className={value.includes(option) ? "text-accent-green" : "text-foreground"}>
+                <span
+                  className={
+                    value.includes(option)
+                      ? 'text-accent-green'
+                      : 'text-foreground'
+                  }
+                >
                   {option}
                 </span>
               </div>

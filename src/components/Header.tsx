@@ -23,7 +23,10 @@ export function Header() {
         {/* Brand */}
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse-dot" />
-          <Link href="/dashboard" className="font-mono text-sm tracking-wider text-text-primary uppercase font-medium">
+          <Link
+            href="/dashboard"
+            className="font-mono text-sm tracking-wider text-text-primary uppercase font-medium"
+          >
             Nubra Dashboard
           </Link>
         </div>

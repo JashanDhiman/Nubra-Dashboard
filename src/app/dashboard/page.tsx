@@ -14,7 +14,11 @@ import { SidePanel } from '@/components/SidePanel';
 import { Header } from '@/components/Header';
 
 export default function DashboardPage() {
-  const { isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    error: authError,
+  } = useAuth();
   const router = useRouter();
   const { filter, setFilter, expiries } = useDashboardStore();
 
@@ -52,7 +56,9 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-2">
         <div className="text-center max-w-md p-6 bg-surface-1 rounded-lg shadow border border-border">
-          <p className="text-destructive mb-4">Authentication failed: {authError}</p>
+          <p className="text-destructive mb-4">
+            Authentication failed: {authError}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"

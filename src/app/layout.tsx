@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -29,9 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable}`}>
       <body className="bg-surface font-sans text-text-primary antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

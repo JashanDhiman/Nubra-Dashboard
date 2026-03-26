@@ -8,10 +8,27 @@ import { MultiSelect } from '@/components/MultiSelect';
 import { useAuth } from '@/contexts/AuthContext';
 
 const FIELD_OPTIONS = [
-  "open", "high", "low", "close", "tick_volume", "cumulative_volume",
-  "cumulative_volume_premium", "cumulative_oi", "cumulative_call_oi",
-  "cumulative_put_oi", "cumulative_fut_oi", "l1bid", "l1ask", "theta",
-  "delta", "gamma", "vega", "iv_bid", "iv_ask", "iv_mid", "cumulative_volume_delta"
+  'open',
+  'high',
+  'low',
+  'close',
+  'tick_volume',
+  'cumulative_volume',
+  'cumulative_volume_premium',
+  'cumulative_oi',
+  'cumulative_call_oi',
+  'cumulative_put_oi',
+  'cumulative_fut_oi',
+  'l1bid',
+  'l1ask',
+  'theta',
+  'delta',
+  'gamma',
+  'vega',
+  'iv_bid',
+  'iv_ask',
+  'iv_mid',
+  'cumulative_volume_delta',
 ];
 
 interface HistoricalQuery {
@@ -37,7 +54,11 @@ interface HistoricalData {
 }
 
 export default function HistoricalDataPage() {
-  const { isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading: authLoading,
+    error: authError,
+  } = useAuth();
   const router = useRouter();
   const [query, setQuery] = useState<HistoricalQuery>({
     exchange: 'NSE',
@@ -77,7 +98,9 @@ export default function HistoricalDataPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-2">
         <div className="text-center max-w-md p-6 bg-surface-1 rounded-lg shadow border border-border">
-          <p className="text-destructive mb-4">Authentication failed: {authError}</p>
+          <p className="text-destructive mb-4">
+            Authentication failed: {authError}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
@@ -246,7 +269,7 @@ export default function HistoricalDataPage() {
                   </label>
                   <MultiSelect
                     value={query.fields}
-                    onChange={(fields) => setQuery({ ...query, fields })}
+                    onChange={fields => setQuery({ ...query, fields })}
                     options={FIELD_OPTIONS}
                     placeholder="Select data fields..."
                     className="w-full"
@@ -297,7 +320,8 @@ export default function HistoricalDataPage() {
               {/* Submit Button */}
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <div className="text-xs text-text-muted">
-                  Configure your query parameters above and click fetch to retrieve data
+                  Configure your query parameters above and click fetch to
+                  retrieve data
                 </div>
                 <button
                   type="submit"
@@ -310,9 +334,7 @@ export default function HistoricalDataPage() {
                       Fetching...
                     </>
                   ) : (
-                    <>
-                      Fetch Data
-                    </>
+                    <>Fetch Data</>
                   )}
                 </button>
               </div>

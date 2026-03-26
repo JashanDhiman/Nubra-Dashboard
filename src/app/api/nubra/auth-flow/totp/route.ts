@@ -88,7 +88,11 @@ export async function POST(request: NextRequest) {
 
     if (!verifyResponse.ok) {
       const errorText = await verifyResponse.text();
-      console.error('MPIN verification failed:', verifyResponse.status, errorText);
+      console.error(
+        'MPIN verification failed:',
+        verifyResponse.status,
+        errorText
+      );
       return NextResponse.json(
         { error: `MPIN verification failed: ${errorText}` },
         { status: verifyResponse.status }
@@ -112,7 +116,6 @@ export async function POST(request: NextRequest) {
       userId: verifyData.userId,
       email: verifyData.email,
     });
-
   } catch (error) {
     console.error('Authentication error:', error);
     return NextResponse.json(

@@ -15,7 +15,10 @@ export function ConnectionBar() {
       {isMock && (
         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-accent-amber/10 border border-accent-amber/30 text-accent-amber text-[10px]">
           <span>⚠</span>
-          <span>MOCK MODE — set NUBRA_EMAIL, NUBRA_TOTP_SECRET, and NUBRA_MPIN in .env.local for live data</span>
+          <span>
+            MOCK MODE — set NUBRA_EMAIL, NUBRA_TOTP_SECRET, and NUBRA_MPIN in
+            .env.local for live data
+          </span>
         </div>
       )}
 
