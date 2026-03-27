@@ -39,11 +39,12 @@ export function useAuthentication() {
 
         const data = await response.json();
 
+        console.log('[useAuthentication] Session token stored', data);
         if (data.success && data.session_token) {
           localStorage.setItem('sessionToken', data.session_token);
           localStorage.setItem('userId', data.userId?.toString() || '');
+          localStorage.setItem('wsToken', data.ws_token);
           setIsAuthenticated(true);
-          console.log('[useAuthentication] Authentication successful');
         } else {
           throw new Error('Failed to obtain session token');
         }
@@ -55,6 +56,7 @@ export function useAuthentication() {
         // Clear any invalid token
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('userId');
+        localStorage.removeItem('wsToken');
       } finally {
         setIsLoading(false);
       }
@@ -82,11 +84,12 @@ export function useAuthentication() {
 
       const data = await response.json();
 
+      console.log('[useAuthentication] Session token stored', data);
       if (data.success && data.session_token) {
         localStorage.setItem('sessionToken', data.session_token);
         localStorage.setItem('userId', data.userId?.toString() || '');
+        localStorage.setItem('wsToken', data.ws_token);
         setIsAuthenticated(true);
-        console.log('[useAuthentication] Re-authentication successful');
       }
     } catch (err) {
       console.error('[useAuthentication] Re-authentication failed:', err);
@@ -94,6 +97,7 @@ export function useAuthentication() {
       setIsAuthenticated(false);
       localStorage.removeItem('sessionToken');
       localStorage.removeItem('userId');
+      localStorage.removeItem('wsToken');
     } finally {
       setIsLoading(false);
     }

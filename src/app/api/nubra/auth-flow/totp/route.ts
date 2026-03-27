@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     console.log('Generated TOTP:', totp);
 
     // Step 1: TOTP Login
-    const totpResponse = await fetch('https://api.nubra.io/totp/login', {
+    const totpResponse = await fetch(`${process.env.NUBRA_BASE_URL}/totp/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Verify MPIN
-    const verifyResponse = await fetch('https://api.nubra.io/verifypin', {
+    const verifyResponse = await fetch(`${process.env.NUBRA_BASE_URL}/verifypin`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${totpData.auth_token}`,
@@ -108,13 +108,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Authentication successful');
+    console.log('Authentication successful', verifyData);
 
     return NextResponse.json({
       success: true,
       session_token: verifyData.session_token,
       userId: verifyData.userId,
       email: verifyData.email,
+      ws_token: verifyData.env_info?.ws_token,
     });
   } catch (error) {
     console.error('Authentication error:', error);

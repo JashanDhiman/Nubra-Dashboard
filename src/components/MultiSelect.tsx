@@ -45,6 +45,14 @@ export function MultiSelect({
     }
   };
 
+  const selectAll = () => {
+    onChange([...options]);
+  };
+
+  const clearAll = () => {
+    onChange([]);
+  };
+
   const removeOption = (option: string) => {
     onChange(value.filter(item => item !== option));
   };
@@ -82,8 +90,31 @@ export function MultiSelect({
       {/* Dropdown Options */}
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-surface-1 border border-border rounded shadow-lg max-h-48 overflow-y-auto">
+          <div className="p-1 border-b border-border">
+            {/* Select All/Clear All Options */}
+            <div className="flex gap-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  selectAll();
+                }}
+                className="flex-1 px-2 py-1.5 hover:bg-surface-2 cursor-pointer text-xs font-mono text-accent-green hover:text-accent-green/80 transition-colors"
+              >
+                Select All
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearAll();
+                }}
+                className="flex-1 px-2 py-1.5 hover:bg-surface-2 cursor-pointer text-xs font-mono text-accent-red hover:text-accent-red/80 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
           <div className="p-1">
-            {options.map(option => (
+            {options.map((option) => (
               <div
                 key={option}
                 onClick={() => toggleOption(option)}
@@ -92,16 +123,10 @@ export function MultiSelect({
                 <input
                   type="checkbox"
                   checked={value.includes(option)}
-                  onChange={() => {}}
+                  onChange={() => { }}
                   className="w-3 h-3 text-primary bg-surface-2 border-border rounded focus:ring-primary"
                 />
-                <span
-                  className={
-                    value.includes(option)
-                      ? 'text-accent-green'
-                      : 'text-foreground'
-                  }
-                >
+                <span className={value.includes(option) ? "text-accent-green" : "text-foreground"}>
                   {option}
                 </span>
               </div>

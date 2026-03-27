@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.session_token) {
         localStorage.setItem('sessionToken', data.session_token);
         localStorage.setItem('userId', data.userId?.toString() || '');
+        localStorage.setItem('wsToken', data.ws_token);
         setIsAuthenticated(true);
         console.log('[AuthProvider] Authentication successful');
       } else {
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(false);
       localStorage.removeItem('sessionToken');
       localStorage.removeItem('userId');
+      localStorage.removeItem('wsToken');
     } finally {
       setIsLoading(false);
     }
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear session from localStorage
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('userId');
+    localStorage.removeItem('wsToken');
 
     // Update state
     setIsAuthenticated(false);

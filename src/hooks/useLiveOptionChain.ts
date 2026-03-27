@@ -186,10 +186,10 @@ export function useLiveOptionChain() {
         return;
       }
 
-      const tokens = snapshot.rows.flatMap(row => [
-        row.call.instrument_token,
-        row.put.instrument_token,
-      ]);
+      // Extract exchange, asset, and expiry from snapshot for option chain subscription
+      const exchange = 'NSE'; // Default to NSE, should be configurable
+      const asset = snapshot.underlying;
+      const expiry = snapshot.expiry;
 
       if (wsManager.current) wsManager.current.disconnect();
 
@@ -201,9 +201,43 @@ export function useLiveOptionChain() {
       ws.onTick((ticks: WsTick[]) => ticks.forEach(t => applyTick(t)));
 
       try {
-        await ws.connect('session-managed-by-server');
-        ws.subscribe(tokens, 'full');
-        ws.subscribeGreeks(tokens);
+        // Get the session token (different from websokect token)
+        const wsToken = localStorage.getItem('sessionToken'); // use wsToken if websokect token is required
+        if (!wsToken) {
+          throw new Error(
+            'No WebSocket token available for WebSocket connection'
+          );
+        }
+
+        console.log(
+          '[useLiveOptionChain] Connecting to WebSocket with ws_token:',
+          wsToken.substring(0, 10) + '...'
+        );
+        await ws.connect(wsToken);
+
+        // Subscribe to option chain for real-time updates
+        console.log('[useLiveOptionChain] Subscribing to option chain:', {
+          exchange,
+          asset,
+          expiry,
+        });
+        ws.subscribeOptionChain(exchange, asset, expiry);
+
+        // Also subscribe to Greeks for individual instruments if needed
+        const tokens = snapshot.rows.flatMap(row => [
+          row.call.instrument_token,
+          row.put.instrument_token,
+        ]);
+        if (tokens.length > 0) {
+          console.log(
+            '[useLiveOptionChain] Subscribing to Greeks for',
+            tokens.length,
+            'instruments'
+          );
+          ws.subscribeGreeks(tokens);
+        }
+
+        console.log('[useLiveOptionChain] WebSocket subscriptions established');
       } catch (err) {
         console.error(
           '[useLiveOptionChain] WS connect failed, falling back to polling:',
@@ -233,7 +267,7 @@ export function useLiveOptionChain() {
     let cancelled = false;
 
     async function init() {
-      // Use authentication state from hook
+      // Only proceed if authentication is stable and successful
       if (authLoading) {
         console.log('[useLiveOptionChain] Authentication loading...');
         return;
@@ -261,21 +295,35 @@ export function useLiveOptionChain() {
       await connectWebSocket(snapshot);
     }
 
-    if (filter.expiry) {
+    if (filter.expiry && isAuthenticated) {
+      console.log(
+        '[useLiveOptionChain] Initializing WebSocket connection - conditions met'
+      );
       stopMockTicks();
       init();
+    } else {
+      console.log(
+        '[useLiveOptionChain] WebSocket not initialized - conditions:',
+        {
+          filterExpiry: !!filter.expiry,
+          isAuthenticated,
+          authLoading,
+          authError,
+        }
+      );
     }
 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only depend on filter changes and authentication state
   }, [
     filter.underlying,
     filter.expiry,
-    isAuthenticated,
-    authLoading,
-    authError,
+    isAuthenticated, // Simplified - just check if authenticated
+    fetchSnapshot,
+    connectWebSocket,
+    stopMockTicks,
   ]);
 
   useEffect(() => {

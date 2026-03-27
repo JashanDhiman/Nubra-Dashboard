@@ -1,5 +1,5 @@
 /**
- * GET /api/options-chain?underlying=NIFTY&expiry=2025-03-27
+ * GET /api/nubra/options-chain?underlying=NIFTY&expiry=2025-03-27
  * DATA-01: REST API for option chain snapshots (Greeks, OI, LTP, depth)
  * PROC-02, PROC-03, PROC-04: Data processing on server before sending to client
  *
