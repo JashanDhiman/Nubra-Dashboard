@@ -43,17 +43,20 @@ export async function POST(request: NextRequest) {
     console.log('Generated TOTP:', totp);
 
     // Step 1: TOTP Login
-    const totpResponse = await fetch(`${process.env.NUBRA_BASE_URL}/totp/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-device-id': deviceId,
-      },
-      body: JSON.stringify({
-        email: email,
-        totp: parseInt(totp, 10),
-      }),
-    });
+    const totpResponse = await fetch(
+      `${process.env.NUBRA_BASE_URL}/totp/login`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-device-id': deviceId,
+        },
+        body: JSON.stringify({
+          email: email,
+          totp: parseInt(totp, 10),
+        }),
+      }
+    );
 
     if (!totpResponse.ok) {
       const errorText = await totpResponse.text();
@@ -74,17 +77,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 2: Verify MPIN
-    const verifyResponse = await fetch(`${process.env.NUBRA_BASE_URL}/verifypin`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${totpData.auth_token}`,
-        'x-device-id': deviceId,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        pin: mpin,
-      }),
-    });
+    const verifyResponse = await fetch(
+      `${process.env.NUBRA_BASE_URL}/verifypin`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${totpData.auth_token}`,
+          'x-device-id': deviceId,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pin: mpin,
+        }),
+      }
+    );
 
     if (!verifyResponse.ok) {
       const errorText = await verifyResponse.text();

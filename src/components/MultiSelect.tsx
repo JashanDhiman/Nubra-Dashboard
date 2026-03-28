@@ -94,7 +94,7 @@ export function MultiSelect({
             {/* Select All/Clear All Options */}
             <div className="flex gap-1">
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   selectAll();
                 }}
@@ -103,7 +103,7 @@ export function MultiSelect({
                 Select All
               </button>
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   clearAll();
                 }}
@@ -114,7 +114,7 @@ export function MultiSelect({
             </div>
           </div>
           <div className="p-1">
-            {options.map((option) => (
+            {options.map(option => (
               <div
                 key={option}
                 onClick={() => toggleOption(option)}
@@ -123,10 +123,16 @@ export function MultiSelect({
                 <input
                   type="checkbox"
                   checked={value.includes(option)}
-                  onChange={() => { }}
+                  onChange={() => {}}
                   className="w-3 h-3 text-primary bg-surface-2 border-border rounded focus:ring-primary"
                 />
-                <span className={value.includes(option) ? "text-accent-green" : "text-foreground"}>
+                <span
+                  className={
+                    value.includes(option)
+                      ? 'text-accent-green'
+                      : 'text-foreground'
+                  }
+                >
                   {option}
                 </span>
               </div>
