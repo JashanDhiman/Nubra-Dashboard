@@ -43,7 +43,7 @@ export default function HistoricalDataPage() {
   const [query, setQuery] = useState<HistoricalQuery>({
     exchange: 'NSE',
     type: 'STOCK',
-    values: ['ASIANPAINT'],
+    values: 'ASIANPAINT',
     fields: ['value'],
     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
     endDate: new Date().toISOString(),
@@ -129,7 +129,14 @@ export default function HistoricalDataPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${sessionToken}`,
         },
-        body: JSON.stringify({ query: [query] }),
+        body: JSON.stringify({
+          query: [{
+            ...query,
+            values: typeof query.values === 'string'
+              ? query.values.split(',').map(s => s.trim()).filter(s => s.length > 0)
+              : query.values
+          }]
+        }),
       });
 
       if (!response.ok) {
@@ -161,7 +168,7 @@ export default function HistoricalDataPage() {
             <div className="flex items-center gap-2 mb-4">
               <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse-dot" />
               <h2 className="text-sm font-semibold text-foreground font-mono uppercase tracking-wider">
-                Query Parameters
+                Search
               </h2>
             </div>
 
@@ -248,12 +255,12 @@ export default function HistoricalDataPage() {
                   </label>
                   <input
                     type="text"
-                    value={Array.isArray(query.values) ? query.values.join(', ') : query.values}
+                    value={typeof query.values === 'string' ? query.values : query.values.join(', ')}
                     onChange={e => {
-                      const valuesArray = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                      const inputValue = e.target.value;
                       setQuery({
                         ...query,
-                        values: valuesArray.length > 0 ? valuesArray : ['']
+                        values: inputValue
                       });
                     }}
                     className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
@@ -283,46 +290,30 @@ export default function HistoricalDataPage() {
 
               {/* Advanced Options Row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div className="space-y-1">
-                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="intraDay"
+                    checked={query.intraDay || false}
+                    onChange={e => setQuery({ ...query, intraDay: e.target.checked })}
+                    className="rounded border-border bg-surface-2 text-primary focus:ring-primary cursor-pointer"
+                  />
+                  <label htmlFor="intraDay" className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer">
                     Intra Day
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="intraDay"
-                      checked={query.intraDay || false}
-                      onChange={e => setQuery({ ...query, intraDay: e.target.checked })}
-                      className="rounded border-border bg-surface-2 text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="intraDay" className="text-xs font-mono text-foreground">
-                      {query.intraDay ? 'Enabled' : 'Disabled'}
-                    </label>
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    Use current date as start date
-                  </p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="realTime"
+                    checked={query.realTime || false}
+                    onChange={e => setQuery({ ...query, realTime: e.target.checked })}
+                    className="rounded border-border bg-surface-2 text-primary focus:ring-primary cursor-pointer"
+                  />
+                  <label htmlFor="realTime" className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer">
                     Real Time
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="realTime"
-                      checked={query.realTime || false}
-                      onChange={e => setQuery({ ...query, realTime: e.target.checked })}
-                      className="rounded border-border bg-surface-2 text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="realTime" className="text-xs font-mono text-foreground">
-                      {query.realTime ? 'Enabled' : 'Disabled'}
-                    </label>
-                  </div>
-                  <p className="text-xs text-text-muted">
-                    Real-time data fetch
-                  </p>
                 </div>
               </div>
 
