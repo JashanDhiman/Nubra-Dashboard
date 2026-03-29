@@ -229,3 +229,44 @@ export interface GEXChartPoint {
   strike: number;
   gex: number;
 }
+
+// ─── HISTORICAL DATA ─────────────────────────────────────────────────────────────
+export interface HistoricalQuery {
+  exchange: string;
+  type: 'STOCK' | 'INDEX' | 'OPT' | 'FUT';
+  values: string | string[];
+  fields: string[];
+  startDate: string;
+  endDate: string;
+  interval:
+    | '1s'
+    | '1m'
+    | '2m'
+    | '3m'
+    | '5m'
+    | '15m'
+    | '30m'
+    | '1h'
+    | '1d'
+    | '1w'
+    | '1mt';
+  intraDay?: boolean;
+  realTime?: boolean;
+}
+
+export interface HistoricalDataPoint {
+  ts: number;
+  v: number;
+}
+
+export interface HistoricalData {
+  result: Array<{
+    exchange: string;
+    type: string;
+    values: Array<{
+      [symbol: string]: {
+        [field: string]: HistoricalDataPoint[];
+      };
+    }>;
+  }>;
+}

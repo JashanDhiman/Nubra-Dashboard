@@ -6,6 +6,22 @@ import { OptionChainRow, OptionLeg } from '@/types';
 import { formatOI, formatPrice, oiBarWidth } from '@/lib/analytics';
 import clsx from 'clsx';
 
+// ─── Tooltip Component ───────────────────────────────────────────────────────────
+function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
+  const groupId = `tooltip-${Math.random().toString(36).substr(2, 9)}`;
+  return (
+    <div className={groupId}>
+      <div className="relative inline-block group/item">
+        {children}
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-surface-1 border border-border rounded text-[10px] font-mono text-text-primary whitespace-nowrap opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
+          {content}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-0.5 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface-1"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── OI Bar ───────────────────────────────────────────────────────────────────
 function OIBar({
   oi,
@@ -21,9 +37,11 @@ function OIBar({
     <div className="flex items-center gap-1.5">
       {side === 'call' && (
         <div className="flex items-center gap-1">
-          <span className="text-[11px] font-mono text-text-secondary w-12 text-right">
-            {formatOI(oi)}
-          </span>
+          <Tooltip content="Open Interest">
+            <span className="text-[11px] font-mono text-text-secondary w-12 text-right">
+              {formatOI(oi)}
+            </span>
+          </Tooltip>
           <div className="w-16 h-1 bg-surface-3 rounded overflow-hidden">
             <div
               className="h-full bg-accent-blue rounded transition-all duration-300"
@@ -40,9 +58,11 @@ function OIBar({
               style={{ width: `${width}%` }}
             />
           </div>
-          <span className="text-[11px] font-mono text-text-secondary w-12">
-            {formatOI(oi)}
-          </span>
+          <Tooltip content="Open Interest">
+            <span className="text-[11px] font-mono text-text-secondary w-12">
+              {formatOI(oi)}
+            </span>
+          </Tooltip>
         </div>
       )}
     </div>
@@ -53,14 +73,16 @@ function OIBar({
 function ChangeCell({ pct }: { pct: number }) {
   const isUp = pct >= 0;
   return (
-    <span
-      className={clsx(
-        'text-[11px] font-mono',
-        isUp ? 'text-accent-green' : 'text-accent-red'
-      )}
-    >
-      {isUp ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
-    </span>
+    <Tooltip content="Change Percentage">
+      <span
+        className={clsx(
+          'text-[11px] font-mono',
+          isUp ? 'text-accent-green' : 'text-accent-red'
+        )}
+      >
+        {isUp ? '▲' : '▼'} {Math.abs(pct).toFixed(2)}%
+      </span>
+    </Tooltip>
   );
 }
 
@@ -70,24 +92,37 @@ function PriceCell({
   token,
   flashState,
   bold,
+  priceType,
 }: {
   value: number;
   token: string;
   flashState: Record<string, 'up' | 'down' | null>;
   bold?: boolean;
+  priceType?: 'bid' | 'ask' | 'ltp';
 }) {
   const flash = flashState[token];
+  const getTitle = () => {
+    switch (priceType) {
+      case 'bid': return 'Bid Price';
+      case 'ask': return 'Ask Price';
+      case 'ltp': return 'Last Traded Price';
+      default: return 'Price';
+    }
+  };
+
   return (
-    <span
-      className={clsx(
-        'text-[11px] font-mono transition-all duration-100',
-        bold ? 'text-text-primary font-medium' : 'text-text-secondary',
-        flash === 'up' && 'animate-flash-green text-accent-green',
-        flash === 'down' && 'animate-flash-red text-accent-red'
-      )}
-    >
-      {formatPrice(value)}
-    </span>
+    <Tooltip content={getTitle()}>
+      <span
+        className={clsx(
+          'text-[11px] font-mono transition-all duration-100',
+          bold ? 'text-text-primary font-medium' : 'text-text-secondary',
+          flash === 'up' && 'animate-flash-green text-accent-green',
+          flash === 'down' && 'animate-flash-red text-accent-red'
+        )}
+      >
+        {formatPrice(value)}
+      </span>
+    </Tooltip>
   );
 }
 
@@ -101,14 +136,27 @@ function GreekCell({
   value: number;
   color?: string;
 }) {
+  const getFullName = (symbol: string) => {
+    switch (symbol) {
+      case 'IV': return 'Implied Volatility';
+      case 'Δ': return 'Delta';
+      case 'Γ': return 'Gamma';
+      case 'Θ': return 'Theta';
+      case 'V': return 'Vega';
+      default: return symbol;
+    }
+  };
+
   return (
     <td className="px-2 py-1.5 text-center">
-      <span
-        className="text-[10px] font-mono"
-        style={{ color: color || '#7a8fa6' }}
-      >
-        {value.toFixed(2)}
-      </span>
+      <Tooltip content={getFullName(label)}>
+        <span
+          className="text-[10px] font-mono"
+          style={{ color: color || '#7a8fa6' }}
+        >
+          {value.toFixed(2)}
+        </span>
+      </Tooltip>
     </td>
   );
 }
@@ -218,7 +266,7 @@ export function OptionChainTable() {
           <tr className="bg-surface-1 border-b border-border">
             {/* CALLS header */}
             <th
-              colSpan={filter.showGreeks ? 8 : 5}
+              colSpan={filter.showGreeks ? 10 : 5}
               className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-blue uppercase border-r border-border bg-accent-blue/5"
             >
               ← CALLS
@@ -228,7 +276,7 @@ export function OptionChainTable() {
             </th>
             {/* PUTS header */}
             <th
-              colSpan={filter.showGreeks ? 8 : 5}
+              colSpan={filter.showGreeks ? 10 : 5}
               className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-red uppercase border-l border-border bg-accent-red/5"
             >
               PUTS →
@@ -236,41 +284,123 @@ export function OptionChainTable() {
           </tr>
           <tr className="bg-surface-2 border-b border-border text-[9px] font-mono text-text-muted uppercase tracking-widest">
             {/* Call columns */}
-            <th className="py-1.5 px-2 text-right bg-accent-blue/5">OI</th>
-            <th className="py-1.5 px-2 text-right bg-accent-blue/5">Chg%</th>
+            <th className="py-1.5 px-2 text-right bg-accent-blue/5">
+              <Tooltip content="Open Interest">
+                <span>OI</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-right bg-accent-blue/5">
+              <Tooltip content="Change Percentage">
+                <span>Chg%</span>
+              </Tooltip>
+            </th>
             {filter.showGreeks && (
               <>
-                <th className="py-1.5 px-2 text-center bg-accent-blue/5">IV</th>
-                <th className="py-1.5 px-2 text-center bg-accent-blue/5">Δ</th>
-                <th className="py-1.5 px-2 text-center bg-accent-blue/5">Θ</th>
+                <th className="py-1.5 px-2 text-center bg-accent-blue/5">
+                  <Tooltip content="Implied Volatility">
+                    <span>IV</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-blue/5">
+                  <Tooltip content="Delta">
+                    <span>Δ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-blue/5">
+                  <Tooltip content="Gamma">
+                    <span>Γ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-blue/5">
+                  <Tooltip content="Theta">
+                    <span>Θ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-blue/5">
+                  <Tooltip content="Vega">
+                    <span>V</span>
+                  </Tooltip>
+                </th>
               </>
             )}
-            <th className="py-1.5 px-2 text-right bg-accent-blue/5">Bid</th>
-            <th className="py-1.5 px-2 text-right bg-accent-blue/5">LTP</th>
+            <th className="py-1.5 px-2 text-right bg-accent-blue/5">
+              <Tooltip content="Bid Price">
+                <span>Bid</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-right bg-accent-blue/5">
+              <Tooltip content="Last Traded Price">
+                <span>LTP</span>
+              </Tooltip>
+            </th>
             <th className="py-1.5 px-2 text-right bg-accent-blue/5 border-r border-border">
-              Ask
+              <Tooltip content="Ask Price">
+                <span>Ask</span>
+              </Tooltip>
             </th>
 
             {/* Strike */}
             <th className="py-1.5 px-3 text-center font-medium text-text-secondary">
-              —
+              <Tooltip content="Strike Price">
+                <span>—</span>
+              </Tooltip>
             </th>
 
             {/* Put columns */}
             <th className="py-1.5 px-2 text-left bg-accent-red/5 border-l border-border">
-              Bid
+              <Tooltip content="Bid Price">
+                <span>Bid</span>
+              </Tooltip>
             </th>
-            <th className="py-1.5 px-2 text-left bg-accent-red/5">LTP</th>
-            <th className="py-1.5 px-2 text-left bg-accent-red/5">Ask</th>
+            <th className="py-1.5 px-2 text-left bg-accent-red/5">
+              <Tooltip content="Last Traded Price">
+                <span>LTP</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-left bg-accent-red/5">
+              <Tooltip content="Ask Price">
+                <span>Ask</span>
+              </Tooltip>
+            </th>
             {filter.showGreeks && (
               <>
-                <th className="py-1.5 px-2 text-center bg-accent-red/5">IV</th>
-                <th className="py-1.5 px-2 text-center bg-accent-red/5">Δ</th>
-                <th className="py-1.5 px-2 text-center bg-accent-red/5">Θ</th>
+                <th className="py-1.5 px-2 text-center bg-accent-red/5">
+                  <Tooltip content="Implied Volatility">
+                    <span>IV</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-red/5">
+                  <Tooltip content="Delta">
+                    <span>Δ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-red/5">
+                  <Tooltip content="Gamma">
+                    <span>Γ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-red/5">
+                  <Tooltip content="Theta">
+                    <span>Θ</span>
+                  </Tooltip>
+                </th>
+                <th className="py-1.5 px-2 text-center bg-accent-red/5">
+                  <Tooltip content="Vega">
+                    <span>V</span>
+                  </Tooltip>
+                </th>
               </>
             )}
-            <th className="py-1.5 px-2 text-left bg-accent-red/5">Chg%</th>
-            <th className="py-1.5 px-2 text-left bg-accent-red/5">OI</th>
+            <th className="py-1.5 px-2 text-left bg-accent-red/5">
+              <Tooltip content="Change Percentage">
+                <span>Chg%</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-left bg-accent-red/5">
+              <Tooltip content="Open Interest">
+                <span>OI</span>
+              </Tooltip>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -341,7 +471,9 @@ function ChainRow({
           <>
             <GreekCell label="IV" value={c.greeks.iv} color="#7a8fa6" />
             <GreekCell label="Δ" value={c.greeks.delta} color="#2d9cf0" />
+            <GreekCell label="Γ" value={c.greeks.gamma} color="#8b5cf6" />
             <GreekCell label="Θ" value={c.greeks.theta} color="#ff4560" />
+            <GreekCell label="V" value={c.greeks.vega} color="#10b981" />
           </>
         )}
 
@@ -351,6 +483,7 @@ function ChainRow({
             value={c.bid}
             token={c.instrument_token + '_bid'}
             flashState={flashState}
+            priceType="bid"
           />
         </td>
 
@@ -364,6 +497,7 @@ function ChainRow({
             token={c.instrument_token}
             flashState={flashState}
             bold
+            priceType="ltp"
           />
         </td>
 
@@ -373,21 +507,24 @@ function ChainRow({
             value={c.ask}
             token={c.instrument_token + '_ask'}
             flashState={flashState}
+            priceType="ask"
           />
         </td>
 
         {/* ── STRIKE ── */}
         <td className="px-3 py-1.5 text-center">
-          <span
-            className={clsx(
-              'font-mono font-medium text-[12px] px-2 py-0.5 rounded',
-              row.isATM
-                ? 'bg-accent-green text-surface-DEFAULT'
-                : 'text-text-secondary'
-            )}
-          >
-            {row.strike.toLocaleString('en-IN')}
-          </span>
+          <Tooltip content="Strike Price">
+            <span
+              className={clsx(
+                'font-mono font-medium text-[12px] px-2 py-0.5 rounded',
+                row.isATM
+                  ? 'bg-accent-green text-surface-DEFAULT'
+                  : 'text-text-secondary'
+              )}
+            >
+              {row.strike.toLocaleString('en-IN')}
+            </span>
+          </Tooltip>
         </td>
 
         {/* Put Bid */}
@@ -396,6 +533,7 @@ function ChainRow({
             value={p.bid}
             token={p.instrument_token + '_bid'}
             flashState={flashState}
+            priceType="bid"
           />
         </td>
 
@@ -409,6 +547,7 @@ function ChainRow({
             token={p.instrument_token}
             flashState={flashState}
             bold
+            priceType="ltp"
           />
         </td>
 
@@ -418,6 +557,7 @@ function ChainRow({
             value={p.ask}
             token={p.instrument_token + '_ask'}
             flashState={flashState}
+            priceType="ask"
           />
         </td>
 
@@ -426,7 +566,9 @@ function ChainRow({
           <>
             <GreekCell label="IV" value={p.greeks.iv} color="#7a8fa6" />
             <GreekCell label="Δ" value={p.greeks.delta} color="#2d9cf0" />
+            <GreekCell label="Γ" value={p.greeks.gamma} color="#8b5cf6" />
             <GreekCell label="Θ" value={p.greeks.theta} color="#ff4560" />
+            <GreekCell label="V" value={p.greeks.vega} color="#10b981" />
           </>
         )}
 
@@ -441,6 +583,7 @@ function ChainRow({
         </td>
       </tr>
       {showDepth && <DepthRow leg={c} side="call" />}
+      {showDepth && <DepthRow leg={p} side="put" />}
     </>
   );
 }

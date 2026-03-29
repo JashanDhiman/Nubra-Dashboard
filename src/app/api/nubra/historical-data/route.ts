@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate each query object
+    // Validate each query object according to Nubra API specification
     for (const query of body.query) {
       if (
         !query.exchange ||
@@ -55,9 +55,50 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Ensure values is an array
-      if (!Array.isArray(query.values)) {
+      // Validate type is one of the allowed values
+      const validTypes = ['STOCK', 'INDEX', 'OPT', 'FUT'];
+      if (!validTypes.includes(query.type)) {
+        return NextResponse.json(
+          {
+            error: `Type must be one of: ${validTypes.join(', ')}`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Validate interval format
+      const validIntervals = [
+        '1s',
+        '1m',
+        '2m',
+        '3m',
+        '5m',
+        '15m',
+        '30m',
+        '1h',
+        '1d',
+        '1w',
+        '1mt',
+      ];
+      if (!validIntervals.includes(query.interval)) {
+        return NextResponse.json(
+          {
+            error: `Interval must be one of: ${validIntervals.join(', ')}`,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Handle values - ensure it's an array for consistency
+      if (typeof query.values === 'string') {
         query.values = [query.values];
+      } else if (!Array.isArray(query.values)) {
+        return NextResponse.json(
+          {
+            error: 'Values must be a string or array of strings',
+          },
+          { status: 400 }
+        );
       }
 
       // Set default fields if not provided
@@ -71,6 +112,21 @@ export async function POST(request: NextRequest) {
       }
       if (query.realTime === undefined) {
         query.realTime = false;
+      }
+
+      // Special handling for NIFTY instruments
+      for (const value of query.values) {
+        if (value.includes('NIFTY')) {
+          // For NIFTY indices, ensure proper exchange
+          if (query.type === 'INDEX' && query.exchange !== 'NSE') {
+            return NextResponse.json(
+              {
+                error: 'NIFTY indices must use NSE exchange',
+              },
+              { status: 400 }
+            );
+          }
+        }
       }
     }
 

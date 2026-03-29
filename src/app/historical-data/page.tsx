@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { HistoricalDataDisplay } from '@/components/HistoricalDataDisplay';
 import { MultiSelect } from '@/components/MultiSelect';
 import { useAuth } from '@/contexts/AuthContext';
+import { HistoricalQuery } from '@/types';
 
 const FIELD_OPTIONS = [
   'open',
@@ -31,27 +32,6 @@ const FIELD_OPTIONS = [
   'cumulative_volume_delta',
 ];
 
-interface HistoricalQuery {
-  exchange: string;
-  type: string;
-  values: string[];
-  fields: string[];
-  startDate: string;
-  endDate: string;
-  interval: string;
-}
-
-interface HistoricalData {
-  result: Array<{
-    exchange: string;
-    type: string;
-    values: Array<{
-      [symbol: string]: {
-        [field: string]: Array<{ ts: number; v: number }>;
-      };
-    }>;
-  }>;
-}
 
 export default function HistoricalDataPage() {
   const {
@@ -68,9 +48,11 @@ export default function HistoricalDataPage() {
     startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
     endDate: new Date().toISOString(),
     interval: '1m',
+    intraDay: false,
+    realTime: false,
   });
 
-  const [data, setData] = useState<HistoricalData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -192,14 +174,24 @@ export default function HistoricalDataPage() {
                   </label>
                   <select
                     value={query.exchange}
-                    onChange={e =>
-                      setQuery({ ...query, exchange: e.target.value })
-                    }
+                    onChange={e => {
+                      const newExchange = e.target.value;
+                      setQuery({ ...query, exchange: newExchange });
+                    }}
                     className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
                   >
                     <option value="NSE">NSE</option>
                     <option value="BSE">BSE</option>
                   </select>
+                  {Array.isArray(query.values) ? query.values.some((v: string) => v.includes('NIFTY')) && query.type === 'INDEX' && query.exchange !== 'NSE' && (
+                    <p className="text-xs text-text-muted">
+                      NIFTY indices must use NSE exchange
+                    </p>
+                  ) : query.values.includes('NIFTY') && query.type === 'INDEX' && query.exchange !== 'NSE' && (
+                    <p className="text-xs text-text-muted">
+                      NIFTY indices must use NSE exchange
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -208,7 +200,10 @@ export default function HistoricalDataPage() {
                   </label>
                   <select
                     value={query.type}
-                    onChange={e => setQuery({ ...query, type: e.target.value })}
+                    onChange={e => {
+                      const newType = e.target.value as 'STOCK' | 'INDEX' | 'OPT' | 'FUT';
+                      setQuery({ ...query, type: newType });
+                    }}
                     className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
                   >
                     <option value="STOCK">Stock</option>
@@ -224,18 +219,23 @@ export default function HistoricalDataPage() {
                   </label>
                   <select
                     value={query.interval}
-                    onChange={e =>
-                      setQuery({ ...query, interval: e.target.value })
-                    }
+                    onChange={e => {
+                      const newInterval = e.target.value as '1s' | '1m' | '2m' | '3m' | '5m' | '15m' | '30m' | '1h' | '1d' | '1w' | '1mt';
+                      setQuery({ ...query, interval: newInterval });
+                    }}
                     className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
                   >
                     <option value="1s">1 second</option>
                     <option value="1m">1 minute</option>
+                    <option value="2m">2 minutes</option>
+                    <option value="3m">3 minutes</option>
                     <option value="5m">5 minutes</option>
                     <option value="15m">15 minutes</option>
                     <option value="30m">30 minutes</option>
                     <option value="1h">1 hour</option>
                     <option value="1d">1 day</option>
+                    <option value="1w">1 week</option>
+                    <option value="1mt">1 month</option>
                   </select>
                 </div>
               </div>
@@ -248,15 +248,16 @@ export default function HistoricalDataPage() {
                   </label>
                   <input
                     type="text"
-                    value={query.values.join(', ')}
-                    onChange={e =>
+                    value={Array.isArray(query.values) ? query.values.join(', ') : query.values}
+                    onChange={e => {
+                      const valuesArray = e.target.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
                       setQuery({
                         ...query,
-                        values: e.target.value.split(',').map(s => s.trim()),
-                      })
-                    }
+                        values: valuesArray.length > 0 ? valuesArray : ['']
+                      });
+                    }}
                     className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
-                    placeholder="ASIANPAINT, NIFTY, RELIANCE"
+                    placeholder="ASIANPAINT, NIFTY, RELIANCE, NIFTY25JUL25000PE"
                   />
                   <p className="text-xs text-text-muted">
                     Enter symbols separated by commas
@@ -276,6 +277,51 @@ export default function HistoricalDataPage() {
                   />
                   <p className="text-xs text-text-muted">
                     Choose multiple fields to retrieve
+                  </p>
+                </div>
+              </div>
+
+              {/* Advanced Options Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Intra Day
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="intraDay"
+                      checked={query.intraDay || false}
+                      onChange={e => setQuery({ ...query, intraDay: e.target.checked })}
+                      className="rounded border-border bg-surface-2 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="intraDay" className="text-xs font-mono text-foreground">
+                      {query.intraDay ? 'Enabled' : 'Disabled'}
+                    </label>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Use current date as start date
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase tracking-wider text-text-muted">
+                    Real Time
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="realTime"
+                      checked={query.realTime || false}
+                      onChange={e => setQuery({ ...query, realTime: e.target.checked })}
+                      className="rounded border-border bg-surface-2 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="realTime" className="text-xs font-mono text-foreground">
+                      {query.realTime ? 'Enabled' : 'Disabled'}
+                    </label>
+                  </div>
+                  <p className="text-xs text-text-muted">
+                    Real-time data fetch
                   </p>
                 </div>
               </div>

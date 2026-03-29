@@ -63,7 +63,7 @@ export class NubraWebSocketManager {
     this.setStatus('connecting');
 
     try {
-      console.log('[NubraWS] Connecting to:', this.wsUrl);
+      console.log('[NubraWS] Connecting to WebSocket', process.env.NEXT_PUBLIC_WS_URL);
       this.ws = new WebSocket(this.wsUrl);
       this.ws.binaryType = 'arraybuffer';
 
@@ -280,7 +280,7 @@ export class NubraWebSocketManager {
     if (this.ws?.readyState === WebSocket.OPEN && this.wsToken) {
       // Use actual token in subscription messages
       const message = `batch_subscribe ${this.wsToken} option [{"exchange":"${exchange}","asset":"${asset}","expiry":"${expiry}"}]`;
-      console.log('[NubraWS] Subscribing to option chain:', message);
+      console.log('[NubraWS] Subscribing to option chain');
       this.ws.send(message);
     }
   }
@@ -294,7 +294,7 @@ export class NubraWebSocketManager {
       });
       // Use actual token in subscription messages
       const message = `batch_subscribe ${this.wsToken} greeks ${tokensJson}`;
-      console.log('[NubraWS] Subscribing to Greeks:', message);
+      console.log('[NubraWS] Subscribing to Greeks:');
       this.ws.send(message);
     }
   }

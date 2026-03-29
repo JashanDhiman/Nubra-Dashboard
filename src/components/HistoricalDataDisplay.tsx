@@ -1,21 +1,6 @@
 'use client';
 
-interface HistoricalDataPoint {
-  ts: number;
-  v: number;
-}
-
-interface HistoricalData {
-  result: Array<{
-    exchange: string;
-    type: string;
-    values: Array<{
-      [symbol: string]: {
-        [field: string]: HistoricalDataPoint[];
-      };
-    }>;
-  }>;
-}
+import { HistoricalDataPoint, HistoricalData } from '@/types';
 
 interface HistoricalDataDisplayProps {
   data: HistoricalData;
@@ -26,11 +11,33 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
     return new Date(nanoseconds / 1_000_000).toLocaleString();
   };
 
-  if (!data || !data.result.length) return null;
+  if (!data || !data.result || !data.result.length) {
+    return (
+      <div className="bg-surface-2 rounded-lg border border-border p-6 text-center">
+        <p className="text-text-muted">No data available</p>
+      </div>
+    );
+  }
 
   const result = data.result[0];
+  if (!result || !result.values || !result.values.length) {
+    return (
+      <div className="bg-surface-2 rounded-lg border border-border p-6 text-center">
+        <p className="text-text-muted">No result data available</p>
+      </div>
+    );
+  }
+
   const symbol = Object.keys(result.values[0])[0];
   const symbolData = result.values[0][symbol];
+
+  if (!symbolData) {
+    return (
+      <div className="bg-surface-2 rounded-lg border border-border p-6 text-center">
+        <p className="text-text-muted">No symbol data available for {symbol}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
