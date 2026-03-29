@@ -32,7 +32,6 @@ const FIELD_OPTIONS = [
   'cumulative_volume_delta',
 ];
 
-
 export default function HistoricalDataPage() {
   const {
     isAuthenticated,
@@ -130,12 +129,18 @@ export default function HistoricalDataPage() {
           Authorization: `Bearer ${sessionToken}`,
         },
         body: JSON.stringify({
-          query: [{
-            ...query,
-            values: typeof query.values === 'string'
-              ? query.values.split(',').map(s => s.trim()).filter(s => s.length > 0)
-              : query.values
-          }]
+          query: [
+            {
+              ...query,
+              values:
+                typeof query.values === 'string'
+                  ? query.values
+                      .split(',')
+                      .map(s => s.trim())
+                      .filter(s => s.length > 0)
+                  : query.values,
+            },
+          ],
         }),
       });
 
@@ -190,15 +195,21 @@ export default function HistoricalDataPage() {
                     <option value="NSE">NSE</option>
                     <option value="BSE">BSE</option>
                   </select>
-                  {Array.isArray(query.values) ? query.values.some((v: string) => v.includes('NIFTY')) && query.type === 'INDEX' && query.exchange !== 'NSE' && (
-                    <p className="text-xs text-text-muted">
-                      NIFTY indices must use NSE exchange
-                    </p>
-                  ) : query.values.includes('NIFTY') && query.type === 'INDEX' && query.exchange !== 'NSE' && (
-                    <p className="text-xs text-text-muted">
-                      NIFTY indices must use NSE exchange
-                    </p>
-                  )}
+                  {Array.isArray(query.values)
+                    ? query.values.some((v: string) => v.includes('NIFTY')) &&
+                      query.type === 'INDEX' &&
+                      query.exchange !== 'NSE' && (
+                        <p className="text-xs text-text-muted">
+                          NIFTY indices must use NSE exchange
+                        </p>
+                      )
+                    : query.values.includes('NIFTY') &&
+                      query.type === 'INDEX' &&
+                      query.exchange !== 'NSE' && (
+                        <p className="text-xs text-text-muted">
+                          NIFTY indices must use NSE exchange
+                        </p>
+                      )}
                 </div>
 
                 <div className="space-y-1">
@@ -208,7 +219,11 @@ export default function HistoricalDataPage() {
                   <select
                     value={query.type}
                     onChange={e => {
-                      const newType = e.target.value as 'STOCK' | 'INDEX' | 'OPT' | 'FUT';
+                      const newType = e.target.value as
+                        | 'STOCK'
+                        | 'INDEX'
+                        | 'OPT'
+                        | 'FUT';
                       setQuery({ ...query, type: newType });
                     }}
                     className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
@@ -227,7 +242,18 @@ export default function HistoricalDataPage() {
                   <select
                     value={query.interval}
                     onChange={e => {
-                      const newInterval = e.target.value as '1s' | '1m' | '2m' | '3m' | '5m' | '15m' | '30m' | '1h' | '1d' | '1w' | '1mt';
+                      const newInterval = e.target.value as
+                        | '1s'
+                        | '1m'
+                        | '2m'
+                        | '3m'
+                        | '5m'
+                        | '15m'
+                        | '30m'
+                        | '1h'
+                        | '1d'
+                        | '1w'
+                        | '1mt';
                       setQuery({ ...query, interval: newInterval });
                     }}
                     className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-sm"
@@ -255,12 +281,16 @@ export default function HistoricalDataPage() {
                   </label>
                   <input
                     type="text"
-                    value={typeof query.values === 'string' ? query.values : query.values.join(', ')}
+                    value={
+                      typeof query.values === 'string'
+                        ? query.values
+                        : query.values.join(', ')
+                    }
                     onChange={e => {
                       const inputValue = e.target.value;
                       setQuery({
                         ...query,
-                        values: inputValue
+                        values: inputValue,
                       });
                     }}
                     className="w-full px-2 py-1 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary bg-surface-2 text-foreground font-mono text-xs"
@@ -295,10 +325,15 @@ export default function HistoricalDataPage() {
                     type="checkbox"
                     id="intraDay"
                     checked={query.intraDay || false}
-                    onChange={e => setQuery({ ...query, intraDay: e.target.checked })}
+                    onChange={e =>
+                      setQuery({ ...query, intraDay: e.target.checked })
+                    }
                     className="rounded border-border bg-surface-2 text-primary focus:ring-primary cursor-pointer"
                   />
-                  <label htmlFor="intraDay" className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer">
+                  <label
+                    htmlFor="intraDay"
+                    className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer"
+                  >
                     Intra Day
                   </label>
                 </div>
@@ -308,10 +343,15 @@ export default function HistoricalDataPage() {
                     type="checkbox"
                     id="realTime"
                     checked={query.realTime || false}
-                    onChange={e => setQuery({ ...query, realTime: e.target.checked })}
+                    onChange={e =>
+                      setQuery({ ...query, realTime: e.target.checked })
+                    }
                     className="rounded border-border bg-surface-2 text-primary focus:ring-primary cursor-pointer"
                   />
-                  <label htmlFor="realTime" className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer">
+                  <label
+                    htmlFor="realTime"
+                    className="text-xs font-mono uppercase tracking-wider text-text-muted cursor-pointer"
+                  >
                     Real Time
                   </label>
                 </div>

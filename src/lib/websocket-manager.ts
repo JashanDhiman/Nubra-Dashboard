@@ -63,7 +63,10 @@ export class NubraWebSocketManager {
     this.setStatus('connecting');
 
     try {
-      console.log('[NubraWS] Connecting to WebSocket', process.env.NEXT_PUBLIC_WS_URL);
+      console.log(
+        '[NubraWS] Connecting to WebSocket',
+        process.env.NEXT_PUBLIC_WS_URL
+      );
       this.ws = new WebSocket(this.wsUrl);
       this.ws.binaryType = 'arraybuffer';
 

@@ -7,7 +7,13 @@ import { formatOI, formatPrice, oiBarWidth } from '@/lib/analytics';
 import clsx from 'clsx';
 
 // ─── Tooltip Component ───────────────────────────────────────────────────────────
-function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
+function Tooltip({
+  children,
+  content,
+}: {
+  children: React.ReactNode;
+  content: string;
+}) {
   const groupId = `tooltip-${Math.random().toString(36).substr(2, 9)}`;
   return (
     <div className={groupId}>
@@ -103,10 +109,14 @@ function PriceCell({
   const flash = flashState[token];
   const getTitle = () => {
     switch (priceType) {
-      case 'bid': return 'Bid Price';
-      case 'ask': return 'Ask Price';
-      case 'ltp': return 'Last Traded Price';
-      default: return 'Price';
+      case 'bid':
+        return 'Bid Price';
+      case 'ask':
+        return 'Ask Price';
+      case 'ltp':
+        return 'Last Traded Price';
+      default:
+        return 'Price';
     }
   };
 
@@ -138,12 +148,18 @@ function GreekCell({
 }) {
   const getFullName = (symbol: string) => {
     switch (symbol) {
-      case 'IV': return 'Implied Volatility';
-      case 'Δ': return 'Delta';
-      case 'Γ': return 'Gamma';
-      case 'Θ': return 'Theta';
-      case 'V': return 'Vega';
-      default: return symbol;
+      case 'IV':
+        return 'Implied Volatility';
+      case 'Δ':
+        return 'Delta';
+      case 'Γ':
+        return 'Gamma';
+      case 'Θ':
+        return 'Theta';
+      case 'V':
+        return 'Vega';
+      default:
+        return symbol;
     }
   };
 

@@ -7,7 +7,13 @@ interface HistoricalDataDisplayProps {
 }
 
 // ─── Tooltip Component ───────────────────────────────────────────────────────────
-function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
+function Tooltip({
+  children,
+  content,
+}: {
+  children: React.ReactNode;
+  content: string;
+}) {
   const groupId = `tooltip-${Math.random().toString(36).substr(2, 9)}`;
   return (
     <div className={groupId}>
@@ -23,53 +29,53 @@ function Tooltip({ children, content }: { children: React.ReactNode; content: st
 }
 
 const fieldShortcuts: { [key: string]: string } = {
-  'open': 'Open',
-  'high': 'High',
-  'low': 'Low',
-  'close': 'Close',
-  'tick_volume': 'TV',
-  'cumulative_volume': 'CV',
-  'cumulative_volume_premium': 'CVP',
-  'cumulative_oi': 'COI',
-  'cumulative_call_oi': 'CCI',
-  'cumulative_put_oi': 'CPI',
-  'cumulative_fut_oi': 'CFI',
-  'l1bid': 'BID',
-  'l1ask': 'ASK',
-  'theta': 'θ',
-  'delta': 'Δ',
-  'gamma': 'Γ',
-  'vega': 'ν',
-  'iv_bid': 'IVB',
-  'iv_ask': 'IVA',
-  'iv_mid': 'IV',
-  'cumulative_volume_delta': 'CVD',
-  'value': 'VAL'
+  open: 'Open',
+  high: 'High',
+  low: 'Low',
+  close: 'Close',
+  tick_volume: 'TV',
+  cumulative_volume: 'CV',
+  cumulative_volume_premium: 'CVP',
+  cumulative_oi: 'COI',
+  cumulative_call_oi: 'CCI',
+  cumulative_put_oi: 'CPI',
+  cumulative_fut_oi: 'CFI',
+  l1bid: 'BID',
+  l1ask: 'ASK',
+  theta: 'θ',
+  delta: 'Δ',
+  gamma: 'Γ',
+  vega: 'ν',
+  iv_bid: 'IVB',
+  iv_ask: 'IVA',
+  iv_mid: 'IV',
+  cumulative_volume_delta: 'CVD',
+  value: 'VAL',
 };
 
 const fieldTooltips: { [key: string]: string } = {
-  'open': 'Open Price',
-  'high': 'High Price',
-  'low': 'Low Price',
-  'close': 'Close Price',
-  'tick_volume': 'Tick Volume',
-  'cumulative_volume': 'Cumulative Volume',
-  'cumulative_volume_premium': 'Cumulative Volume Premium',
-  'cumulative_oi': 'Cumulative Open Interest',
-  'cumulative_call_oi': 'Cumulative Call Open Interest',
-  'cumulative_put_oi': 'Cumulative Put Open Interest',
-  'cumulative_fut_oi': 'Cumulative Futures Open Interest',
-  'l1bid': 'Level 1 Bid',
-  'l1ask': 'Level 1 Ask',
-  'theta': 'Theta (Time Decay)',
-  'delta': 'Delta (Price Sensitivity)',
-  'gamma': 'Gamma (Rate of Delta Change)',
-  'vega': 'Vega (Volatility Sensitivity)',
-  'iv_bid': 'Implied Volatility Bid',
-  'iv_ask': 'Implied Volatility Ask',
-  'iv_mid': 'Implied Volatility Mid',
-  'cumulative_volume_delta': 'Cumulative Volume Delta',
-  'value': 'Value'
+  open: 'Open Price',
+  high: 'High Price',
+  low: 'Low Price',
+  close: 'Close Price',
+  tick_volume: 'Tick Volume',
+  cumulative_volume: 'Cumulative Volume',
+  cumulative_volume_premium: 'Cumulative Volume Premium',
+  cumulative_oi: 'Cumulative Open Interest',
+  cumulative_call_oi: 'Cumulative Call Open Interest',
+  cumulative_put_oi: 'Cumulative Put Open Interest',
+  cumulative_fut_oi: 'Cumulative Futures Open Interest',
+  l1bid: 'Level 1 Bid',
+  l1ask: 'Level 1 Ask',
+  theta: 'Theta (Time Decay)',
+  delta: 'Delta (Price Sensitivity)',
+  gamma: 'Gamma (Rate of Delta Change)',
+  vega: 'Vega (Volatility Sensitivity)',
+  iv_bid: 'Implied Volatility Bid',
+  iv_ask: 'Implied Volatility Ask',
+  iv_mid: 'Implied Volatility Mid',
+  cumulative_volume_delta: 'Cumulative Volume Delta',
+  value: 'Value',
 };
 
 export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
@@ -138,7 +144,9 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
       }> = [];
 
       sortedTimestamps.forEach(ts => {
-        const row: { timestamp: number;[key: string]: number } = { timestamp: ts };
+        const row: { timestamp: number; [key: string]: number } = {
+          timestamp: ts,
+        };
         allFields.forEach(field => {
           const point = symbolData[field].find(p => p.ts === ts);
           row[field] = point ? point.v : 0;
@@ -149,7 +157,7 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
       allSymbolsData.push({
         symbol,
         symbolData,
-        unifiedData
+        unifiedData,
       });
     });
   });
@@ -195,7 +203,9 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
               Total Data Points
             </div>
             <div className="text-sm font-mono font-medium text-foreground">
-              {allSymbolsData.reduce((sum, s) => sum + s.unifiedData.length, 0).toLocaleString()}
+              {allSymbolsData
+                .reduce((sum, s) => sum + s.unifiedData.length, 0)
+                .toLocaleString()}
             </div>
           </div>
         </div>
@@ -203,8 +213,10 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
 
       {/* Tables for each symbol */}
       {allSymbolsData.map((symbolInfo, symbolIndex) => (
-        <div key={symbolInfo.symbol} className="bg-surface-2 rounded-lg border border-border overflow-hidden">
-
+        <div
+          key={symbolInfo.symbol}
+          className="bg-surface-2 rounded-lg border border-border overflow-hidden"
+        >
           <div className="overflow-x-auto">
             <div className="max-h-96 overflow-y-auto">
               {/* Symbol Header */}
@@ -216,13 +228,18 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
                       {symbolInfo.symbol}
                     </h3>
                     <span className="px-2 py-1 bg-accent-muted/20 text-accent-green text-xs font-mono rounded">
-                      {Object.keys(symbolInfo.symbolData).length} fields • {symbolInfo.unifiedData.length} points
+                      {Object.keys(symbolInfo.symbolData).length} fields •{' '}
+                      {symbolInfo.unifiedData.length} points
                     </span>
                   </div>
                   <div className="text-xs font-mono text-text-muted">
                     Latest:{' '}
                     {symbolInfo.unifiedData.length > 0
-                      ? formatTimestamp(symbolInfo.unifiedData[symbolInfo.unifiedData.length - 1].timestamp)
+                      ? formatTimestamp(
+                          symbolInfo.unifiedData[
+                            symbolInfo.unifiedData.length - 1
+                          ].timestamp
+                        )
                       : 'N/A'}
                   </div>
                 </div>
@@ -237,9 +254,7 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
                       Timestamp
                     </th>
                     {Object.keys(symbolInfo.symbolData).map(field => (
-                      <th
-                        key={field}
-                      >
+                      <th key={field}>
                         <Tooltip content={fieldTooltips[field]}>
                           <div className="px-2 py-2 text-center text-xs font-mono uppercase">
                             {fieldShortcuts[field]}
@@ -250,45 +265,50 @@ export function HistoricalDataDisplay({ data }: HistoricalDataDisplayProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {symbolInfo.unifiedData
-                    .slice(0, 100)
-                    .map((row, index) => (
-                      <tr
-                        key={index}
-                        className="hover:bg-surface-1/50 transition-colors duration-150"
-                      >
-                        <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                          {formatTimestamp(row.timestamp)}
+                  {symbolInfo.unifiedData.slice(0, 100).map((row, index) => (
+                    <tr
+                      key={index}
+                      className="hover:bg-surface-1/50 transition-colors duration-150"
+                    >
+                      <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
+                        {formatTimestamp(row.timestamp)}
+                      </td>
+                      {Object.keys(symbolInfo.symbolData).map(field => (
+                        <td
+                          key={field}
+                          className="px-2 py-2 font-mono text-xs text-foreground text-center"
+                        >
+                          {row[field] !== 0 ? row[field].toLocaleString() : '-'}
                         </td>
-                        {Object.keys(symbolInfo.symbolData).map(field => (
-                          <td key={field} className="px-2 py-2 font-mono text-xs text-foreground text-center">
-                            {row[field] !== 0 ? row[field].toLocaleString() : '-'}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
               {/* Footer with more info */}
-              {
-                symbolInfo.unifiedData.length > 100 && (
-                  <div className="px-6 py-4 bg-surface-3 border-t border-border">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-text-muted font-mono">
-                        Showing first 100 of {symbolInfo.unifiedData.length.toLocaleString()}{' '}
-                        data points
-                      </p>
-                      <div className="flex items-center gap-4 text-xs font-mono text-text-muted">
-                        <span>
-                          Range: {formatTimestamp(symbolInfo.unifiedData[0].timestamp)} -{' '}
-                          {formatTimestamp(symbolInfo.unifiedData[symbolInfo.unifiedData.length - 1].timestamp)}
-                        </span>
-                      </div>
+              {symbolInfo.unifiedData.length > 100 && (
+                <div className="px-6 py-4 bg-surface-3 border-t border-border">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-text-muted font-mono">
+                      Showing first 100 of{' '}
+                      {symbolInfo.unifiedData.length.toLocaleString()} data
+                      points
+                    </p>
+                    <div className="flex items-center gap-4 text-xs font-mono text-text-muted">
+                      <span>
+                        Range:{' '}
+                        {formatTimestamp(symbolInfo.unifiedData[0].timestamp)} -{' '}
+                        {formatTimestamp(
+                          symbolInfo.unifiedData[
+                            symbolInfo.unifiedData.length - 1
+                          ].timestamp
+                        )}
+                      </span>
                     </div>
                   </div>
-                )
-              }
+                </div>
+              )}
             </div>
           </div>
         </div>
