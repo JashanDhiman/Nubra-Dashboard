@@ -408,8 +408,8 @@ export function OptionChainTable() {
               </>
             )}
             <th className="py-1.5 px-2 text-left bg-accent-red/5">
-              <Tooltip content="Change Percentage">
-                <span>Chg%</span>
+              <Tooltip content="OI Change">
+                <span>OI Chg%</span>
               </Tooltip>
             </th>
             <th className="py-1.5 px-2 text-left bg-accent-red/5">
