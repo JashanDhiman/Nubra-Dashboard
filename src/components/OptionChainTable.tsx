@@ -283,7 +283,7 @@ export function OptionChainTable() {
             {/* CALLS header */}
             <th
               colSpan={filter.showGreeks ? 10 : 5}
-              className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-blue uppercase border-r border-border bg-accent-blue/5"
+              className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-blue uppercase bg-accent-blue/5"
             >
               ← CALLS
             </th>
@@ -293,7 +293,7 @@ export function OptionChainTable() {
             {/* PUTS header */}
             <th
               colSpan={filter.showGreeks ? 10 : 5}
-              className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-red uppercase border-l border-border bg-accent-red/5"
+              className="py-1.5 px-2 text-center text-[9px] font-mono font-medium tracking-widest text-accent-red uppercase bg-accent-red/5"
             >
               PUTS →
             </th>
@@ -306,8 +306,8 @@ export function OptionChainTable() {
               </Tooltip>
             </th>
             <th className="py-1.5 px-2 text-right bg-accent-blue/5">
-              <Tooltip content="Change Percentage">
-                <span>Chg%</span>
+              <Tooltip content="OI Change">
+                <span>OI Chg%</span>
               </Tooltip>
             </th>
             {filter.showGreeks && (
@@ -345,13 +345,13 @@ export function OptionChainTable() {
               </Tooltip>
             </th>
             <th className="py-1.5 px-2 text-right bg-accent-blue/5">
-              <Tooltip content="Last Traded Price">
-                <span>LTP</span>
-              </Tooltip>
-            </th>
-            <th className="py-1.5 px-2 text-right bg-accent-blue/5 border-r border-border">
               <Tooltip content="Ask Price">
                 <span>Ask</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-right bg-accent-blue/5">
+              <Tooltip content="Last Traded Price">
+                <span>LTP</span>
               </Tooltip>
             </th>
 
@@ -363,11 +363,6 @@ export function OptionChainTable() {
             </th>
 
             {/* Put columns */}
-            <th className="py-1.5 px-2 text-left bg-accent-red/5 border-l border-border">
-              <Tooltip content="Bid Price">
-                <span>Bid</span>
-              </Tooltip>
-            </th>
             <th className="py-1.5 px-2 text-left bg-accent-red/5">
               <Tooltip content="Last Traded Price">
                 <span>LTP</span>
@@ -376,6 +371,11 @@ export function OptionChainTable() {
             <th className="py-1.5 px-2 text-left bg-accent-red/5">
               <Tooltip content="Ask Price">
                 <span>Ask</span>
+              </Tooltip>
+            </th>
+            <th className="py-1.5 px-2 text-left bg-accent-red/5">
+              <Tooltip content="Bid Price">
+                <span>Bid</span>
               </Tooltip>
             </th>
             {filter.showGreeks && (
@@ -503,6 +503,16 @@ function ChainRow({
           />
         </td>
 
+        {/* Call Ask */}
+        <td className="px-2 py-1.5 text-right bg-accent-blue/[0.02]">
+          <PriceCell
+            value={c.ask}
+            token={c.instrument_token + '_ask'}
+            flashState={flashState}
+            priceType="ask"
+          />
+        </td>
+
         {/* Call LTP — clickable */}
         <td
           className="px-2 py-1.5 text-right bg-accent-blue/[0.02] cursor-pointer"
@@ -515,16 +525,10 @@ function ChainRow({
             bold
             priceType="ltp"
           />
-        </td>
-
-        {/* Call Ask */}
-        <td className="px-2 py-1.5 text-right bg-accent-blue/[0.02] border-r border-border">
-          <PriceCell
-            value={c.ask}
-            token={c.instrument_token + '_ask'}
-            flashState={flashState}
-            priceType="ask"
-          />
+          <span className={clsx(
+            'text-[10px]',
+            c.change >= 0 ? 'text-accent-green' : 'text-accent-red'
+          )}>{formatPrice(c.change)}</span>
         </td>
 
         {/* ── STRIKE ── */}
@@ -543,16 +547,6 @@ function ChainRow({
           </Tooltip>
         </td>
 
-        {/* Put Bid */}
-        <td className="px-2 py-1.5 text-left bg-accent-red/[0.02] border-l border-border">
-          <PriceCell
-            value={p.bid}
-            token={p.instrument_token + '_bid'}
-            flashState={flashState}
-            priceType="bid"
-          />
-        </td>
-
         {/* Put LTP — clickable */}
         <td
           className="px-2 py-1.5 text-left bg-accent-red/[0.02] cursor-pointer"
@@ -565,6 +559,10 @@ function ChainRow({
             bold
             priceType="ltp"
           />
+          <span className={clsx(
+            'text-[10px]',
+            p.change >= 0 ? 'text-accent-green' : 'text-accent-red'
+          )}>{formatPrice(p.change)}</span>
         </td>
 
         {/* Put Ask */}
@@ -574,6 +572,16 @@ function ChainRow({
             token={p.instrument_token + '_ask'}
             flashState={flashState}
             priceType="ask"
+          />
+        </td>
+
+        {/* Put Bid */}
+        <td className="px-2 py-1.5 text-left bg-accent-red/[0.02]">
+          <PriceCell
+            value={p.bid}
+            token={p.instrument_token + '_bid'}
+            flashState={flashState}
+            priceType="bid"
           />
         </td>
 

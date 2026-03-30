@@ -46,7 +46,7 @@ export class NubraWebSocketManager {
 
     this.wsToken = wsToken;
     // Use correct Nubra WebSocket endpoint format with token as query parameter
-    this.wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'wss://uatapi.nubra.io/apibatch/ws'}?token=${wsToken}`;
+    this.wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'wss://api.nubra.io/apibatch/ws'}?token=${wsToken}`;
     this.doConnect();
   }
 
