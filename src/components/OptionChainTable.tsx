@@ -525,10 +525,14 @@ function ChainRow({
             bold
             priceType="ltp"
           />
-          <span className={clsx(
-            'text-[10px]',
-            c.change >= 0 ? 'text-accent-green' : 'text-accent-red'
-          )}>{formatPrice(c.change)}</span>
+          <span
+            className={clsx(
+              'text-[10px]',
+              c.change >= 0 ? 'text-accent-green' : 'text-accent-red'
+            )}
+          >
+            {formatPrice(c.change)}
+          </span>
         </td>
 
         {/* ── STRIKE ── */}
@@ -559,10 +563,14 @@ function ChainRow({
             bold
             priceType="ltp"
           />
-          <span className={clsx(
-            'text-[10px]',
-            p.change >= 0 ? 'text-accent-green' : 'text-accent-red'
-          )}>{formatPrice(p.change)}</span>
+          <span
+            className={clsx(
+              'text-[10px]',
+              p.change >= 0 ? 'text-accent-green' : 'text-accent-red'
+            )}
+          >
+            {formatPrice(p.change)}
+          </span>
         </td>
 
         {/* Put Ask */}
