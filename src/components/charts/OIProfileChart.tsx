@@ -4,12 +4,14 @@ import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
   Cell,
+  ComposedChart,
 } from 'recharts';
 import { useDashboardStore } from '@/lib/store';
 import { toOIChartData } from '@/lib/analytics';
@@ -29,8 +31,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function OIProfileChart() {
-  const { filteredRows, snapshot } = useDashboardStore();
-  const data = useMemo(() => toOIChartData(filteredRows), [filteredRows]);
+  const { filteredRows, snapshot, emaPeriod, showEMA } = useDashboardStore();
+  const data = useMemo(() => toOIChartData(filteredRows, emaPeriod), [filteredRows, emaPeriod]);
 
   if (!snapshot || data.length === 0) {
     return <EmptyChart label="OI Profile" />;
@@ -47,12 +49,24 @@ export function OIProfileChart() {
           <span className="w-2.5 h-2.5 rounded-sm bg-[#ff4560] inline-block" />
           Put OI
         </span>
+        {showEMA && (
+          <>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#f59e0b] inline-block" />
+              Call EMA({emaPeriod})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-[#8b5cf6] inline-block" />
+              Put EMA({emaPeriod})
+            </span>
+          </>
+        )}
         <span className="ml-auto text-[10px]">
           ATM: {snapshot.atm_strike.toLocaleString('en-IN')}
         </span>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} barCategoryGap="20%" barGap={1}>
+        <ComposedChart data={data} barCategoryGap="20%" barGap={1}>
           <XAxis
             dataKey="strike"
             tick={{ fill: '#3d5570', fontSize: 9, fontFamily: 'IBM Plex Mono' }}
@@ -91,7 +105,27 @@ export function OIProfileChart() {
             opacity={0.8}
             radius={[2, 2, 0, 0]}
           />
-        </BarChart>
+          {showEMA && (
+            <>
+              <Line
+                type="monotone"
+                dataKey="callOIEMA"
+                name={`Call EMA(${emaPeriod})`}
+                stroke="#f59e0b"
+                strokeWidth={2}
+                dot={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="putOIEMA"
+                name={`Put EMA(${emaPeriod})`}
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                dot={false}
+              />
+            </>
+          )}
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

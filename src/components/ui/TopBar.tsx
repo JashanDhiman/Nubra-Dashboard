@@ -20,16 +20,6 @@ export function TopBar() {
 
   return (
     <header className="flex items-center gap-4 px-4 py-2.5 border-b border-border bg-surface-1 flex-wrap">
-      {/* Brand */}
-      <div className="flex items-center gap-2 mr-2">
-        <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse-dot" />
-        <span className="font-mono text-xs tracking-widest text-text-secondary uppercase">
-          Nubra Options
-        </span>
-      </div>
-
-      <div className="w-px h-4 bg-border" />
-
       {/* Underlying selector */}
       <div className="flex items-center gap-1">
         {UNDERLYINGS.map(u => (

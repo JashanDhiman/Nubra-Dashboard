@@ -27,6 +27,8 @@ interface DashboardStore {
 
   // ── Filters ────────────────────────────────────────────────────────────────
   filter: DashboardFilter;
+  emaPeriod: number;
+  showEMA: boolean;
 
   // ── Connection ─────────────────────────────────────────────────────────────
   connectionStatus: ConnectionStatus;
@@ -36,6 +38,7 @@ interface DashboardStore {
   flashState: FlashState;
   selectedStrike: number | null;
   selectedSide: 'call' | 'put' | null;
+  isChartModalOpen: boolean;
 
   // ── Derived metrics ────────────────────────────────────────────────────────
   maxPain: number;
@@ -55,6 +58,9 @@ interface DashboardStore {
   selectStrike: (strike: number, side: 'call' | 'put') => void;
   setExpiries: (expiries: string[]) => void;
   setOrders: (orders: Order[]) => void;
+  setIsChartModalOpen: (isOpen: boolean) => void;
+  setEmaPeriod: (period: number) => void;
+  setShowEMA: (show: boolean) => void;
 }
 
 const defaultFilter: DashboardFilter = {
@@ -72,6 +78,8 @@ export const useDashboardStore = create<DashboardStore>()(
     filteredRows: [],
     expiries: [],
     filter: defaultFilter,
+    emaPeriod: 9,
+    showEMA: false,
     connectionStatus: {
       ws: 'disconnected',
       rest: 'idle',
@@ -81,6 +89,7 @@ export const useDashboardStore = create<DashboardStore>()(
     flashState: {},
     selectedStrike: null,
     selectedSide: null,
+    isChartModalOpen: false,
     maxPain: 0,
     pcr: 0,
     ivRank: 0,
@@ -232,6 +241,12 @@ export const useDashboardStore = create<DashboardStore>()(
     },
 
     setOrders: orders => set({ orders }),
+
+    setIsChartModalOpen: isOpen => set({ isChartModalOpen: isOpen }),
+
+    setEmaPeriod: period => set({ emaPeriod: period }),
+
+    setShowEMA: show => set({ showEMA: show }),
   }))
 );
 

@@ -41,7 +41,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-surface-1 rounded-lg shadow-lg border border-border">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
-            Nubra Options Dashboard
+            Options Dashboard
           </h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Sign in to access your trading dashboard

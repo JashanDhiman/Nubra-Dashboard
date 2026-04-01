@@ -27,7 +27,7 @@ export function Header() {
             href="/dashboard"
             className="font-mono text-sm tracking-wider text-text-primary uppercase font-medium"
           >
-            Nubra Dashboard
+            Trading Dashboard
           </Link>
         </div>
 

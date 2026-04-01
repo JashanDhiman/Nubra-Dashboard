@@ -93,14 +93,75 @@ export function oiChangeLabel(pct: number): string {
   return `${sign}${pct.toFixed(1)}%`;
 }
 
+// ─── EMA Calculation ───────────────────────────────────────────────────────────
+export function calculateEMA(data: number[], period: number): number[] {
+  if (data.length === 0) return [];
+  if (period <= 1) return [...data];
+
+  const multiplier = 2 / (period + 1);
+  const ema: number[] = [];
+
+  // Start with SMA for the first EMA value
+  let sum = 0;
+  for (let i = 0; i < Math.min(period, data.length); i++) {
+    sum += data[i];
+  }
+  ema.push(sum / Math.min(period, data.length));
+
+  // Calculate EMA for remaining values
+  for (let i = period; i < data.length; i++) {
+    const currentEMA =
+      (data[i] - ema[ema.length - 1]) * multiplier + ema[ema.length - 1];
+    ema.push(currentEMA);
+  }
+
+  return ema;
+}
+
+// Calculate EMA for chart data points
+export function calculateEMAForChart(
+  data: { strike: number; value: number }[],
+  period: number
+): { strike: number; value: number; ema: number }[] {
+  if (data.length === 0) return [];
+
+  const values = data.map(d => d.value);
+  const emaValues = calculateEMA(values, period);
+
+  return data.map((point, index) => ({
+    ...point,
+    ema: index < emaValues.length ? emaValues[index] : point.value,
+  }));
+}
+
 // ─── Chart data transformers ──────────────────────────────────────────────────
-export function toOIChartData(rows: OptionChainRow[]): OIChartPoint[] {
-  return rows.map(r => ({
+export function toOIChartData(
+  rows: OptionChainRow[],
+  emaPeriod: number = 9
+): OIChartPoint[] {
+  const baseData = rows.map(r => ({
     strike: r.strike,
     callOI: Math.round(r.call.oi / 1000), // in thousands
     putOI: Math.round(r.put.oi / 1000),
     callOIChange: Math.round(r.call.oi_change / 1000),
     putOIChange: Math.round(r.put.oi_change / 1000),
+  }));
+
+  // Add EMA for call and put OI
+  const callEMAData = calculateEMAForChart(
+    baseData.map(d => ({ strike: d.strike, value: d.callOI })),
+    emaPeriod
+  );
+
+  const putEMAData = calculateEMAForChart(
+    baseData.map(d => ({ strike: d.strike, value: d.putOI })),
+    emaPeriod
+  );
+
+  return baseData.map((point, index) => ({
+    ...point,
+    callOIEMA: callEMAData[index]?.ema || point.callOI,
+    putOIEMA: putEMAData[index]?.ema || point.putOI,
   }));
 }
 

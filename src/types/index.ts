@@ -217,6 +217,8 @@ export interface OIChartPoint {
   putOI: number;
   callOIChange: number;
   putOIChange: number;
+  callOIEMA?: number;
+  putOIEMA?: number;
 }
 
 export interface IVChartPoint {

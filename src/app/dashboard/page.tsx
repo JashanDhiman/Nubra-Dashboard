@@ -12,6 +12,7 @@ import { ChainControls } from '@/components/ui/ChainControls';
 import { OptionChainTable } from '@/components/OptionChainTable';
 import { SidePanel } from '@/components/SidePanel';
 import { Header } from '@/components/Header';
+import { ChartModal } from '@/components/ChartModal';
 
 export default function DashboardPage() {
   const {
@@ -103,6 +104,9 @@ export default function DashboardPage() {
           <SidePanel />
         </div>
       </div>
+
+      {/* Chart Modal */}
+      <ChartModal />
     </div>
   );
 }
