@@ -12,7 +12,8 @@ const STRIKE_RANGES = [
 ];
 
 export function ChainControls() {
-  const { filter, setFilter, filteredRows, snapshot, setIsChartModalOpen } = useDashboardStore();
+  const { filter, setFilter, filteredRows, snapshot, setIsChartModalOpen } =
+    useDashboardStore();
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-surface-2 border-b border-border flex-wrap">

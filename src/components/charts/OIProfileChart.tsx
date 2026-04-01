@@ -32,7 +32,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function OIProfileChart() {
   const { filteredRows, snapshot, emaPeriod, showEMA } = useDashboardStore();
-  const data = useMemo(() => toOIChartData(filteredRows, emaPeriod), [filteredRows, emaPeriod]);
+  const data = useMemo(
+    () => toOIChartData(filteredRows, emaPeriod),
+    [filteredRows, emaPeriod]
+  );
 
   if (!snapshot || data.length === 0) {
     return <EmptyChart label="OI Profile" />;
