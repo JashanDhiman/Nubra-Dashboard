@@ -3,7 +3,12 @@
 import { useMemo } from 'react';
 import { useDashboardStore } from '@/lib/store';
 import { OptionChainRow, OptionLeg } from '@/types';
-import { formatOI, formatPrice, formatStrike, oiBarWidth } from '@/lib/analytics';
+import {
+  formatOI,
+  formatPrice,
+  formatStrike,
+  oiBarWidth,
+} from '@/lib/analytics';
 import clsx from 'clsx';
 
 // ─── Tooltip Component ───────────────────────────────────────────────────────────

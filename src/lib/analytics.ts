@@ -195,13 +195,13 @@ export function formatPrice(n: number): string {
   //  minimumFractionDigits: 2,
   //  maximumFractionDigits: 2,
   //}).format(n);
-    return new Intl.NumberFormat('en-IN').format(n / 100);
+  return new Intl.NumberFormat('en-IN').format(n / 100);
 }
 
 export function formatStrike(n: number): string {
   // If the number ends with two zeros, remove them
   //if (n % 100 === 0 && n !== 0) {
-    return new Intl.NumberFormat('en-IN').format(n / 100);
+  return new Intl.NumberFormat('en-IN').format(n / 100);
   //}
   //return new Intl.NumberFormat('en-IN').format(n);
 }
