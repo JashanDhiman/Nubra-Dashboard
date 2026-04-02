@@ -19,6 +19,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: 'Nubra Options Dashboard',
   description: 'Real-time options chain dashboard — Greeks, OI, GEX, Max Pain',
+  icons: {
+    icon: '/logo.ico',
+  },
 };
 
 export default function RootLayout({

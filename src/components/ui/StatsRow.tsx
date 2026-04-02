@@ -61,7 +61,7 @@ export function StatsRow() {
       <StatCard
         label="ATM Strike"
         value={atmStr}
-        sub={`Spot: ${snapshot.spot.toLocaleString('en-IN')}`}
+        sub={`Spot: ${snapshot.spot}`}
         subColor="#7a8fa6"
       />
       <StatCard

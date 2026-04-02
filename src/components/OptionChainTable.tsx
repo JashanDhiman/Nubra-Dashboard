@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useDashboardStore } from '@/lib/store';
 import { OptionChainRow, OptionLeg } from '@/types';
-import { formatOI, formatPrice, oiBarWidth } from '@/lib/analytics';
+import { formatOI, formatPrice, formatStrike, oiBarWidth } from '@/lib/analytics';
 import clsx from 'clsx';
 
 // ─── Tooltip Component ───────────────────────────────────────────────────────────
@@ -546,7 +546,7 @@ function ChainRow({
                   : 'text-text-secondary'
               )}
             >
-              {row.strike.toLocaleString('en-IN')}
+              {formatStrike(row.strike)}
             </span>
           </Tooltip>
         </td>

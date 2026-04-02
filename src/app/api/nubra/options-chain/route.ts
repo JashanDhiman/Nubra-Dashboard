@@ -15,6 +15,49 @@ import {
 } from '@/lib/mock-data';
 import { OptionChainSnapshot } from '@/types';
 
+// Helper function to format expiry date from YYYYMMDD to DD MMM
+function formatExpiry(dateString: string): string {
+  if (!dateString) return dateString;
+
+  // Handle YYYYMMDD format (e.g., "20250327")
+  let formattedDate = dateString;
+  if (dateString.length === 8 && /^\d{8}$/.test(dateString)) {
+    formattedDate = `${dateString.slice(0, 4)}-${dateString.slice(4, 6)}-${dateString.slice(6, 8)}`;
+  }
+
+  const date = new Date(formattedDate);
+  if (isNaN(date.getTime())) return dateString;
+
+  const day = date.getDate().toString().padStart(2, '0');
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const month = months[date.getMonth()];
+
+  return `${day} ${month}`;
+}
+
+// Helper function to transform expiries array to objects with raw and formatted values
+function transformExpiries(
+  expiries: string[]
+): Array<{ raw: string; formatted: string }> {
+  return expiries.map(expiry => ({
+    raw: expiry,
+    formatted: formatExpiry(expiry),
+  }));
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const underlying = searchParams.get('underlying') || 'NIFTY';
@@ -35,8 +78,9 @@ export async function GET(request: NextRequest) {
   // ── Mock mode: no credentials configured ──────────────────────────────────
   if (isMockMode()) {
     if (action === 'expiries') {
+      const mockExpiries = generateMockExpiries();
       return NextResponse.json(
-        { expiries: generateMockExpiries(), mock: true },
+        { expiries: transformExpiries(mockExpiries), mock: true },
         { headers: { 'Cache-Control': 'no-store' } }
       );
     }
@@ -85,7 +129,8 @@ export async function GET(request: NextRequest) {
       }
 
       const data = await response.json();
-      return NextResponse.json({ expiries: data.chain.all_expiries || [] });
+      const rawExpiries = data.chain.all_expiries || [];
+      return NextResponse.json({ expiries: transformExpiries(rawExpiries) });
     }
 
     if (!expiry) {

@@ -36,7 +36,7 @@ export default function DashboardPage() {
   // Set default expiry once expiries load
   useEffect(() => {
     if (expiries.length > 0 && !filter.expiry) {
-      setFilter({ expiry: expiries[0] });
+      setFilter({ expiry: expiries[0].raw });
     }
   }, [expiries, filter.expiry, setFilter]);
 

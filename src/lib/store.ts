@@ -18,12 +18,18 @@ import {
 } from '@/types';
 import { calculateMaxPain, calculatePCR, calculateGEX } from '@/lib/analytics';
 
+// Expiry object type
+interface ExpiryOption {
+  raw: string;
+  formatted: string;
+}
+
 interface DashboardStore {
   // ── Snapshot ───────────────────────────────────────────────────────────────
   snapshot: OptionChainSnapshot | null;
   rows: OptionChainRow[];
   filteredRows: OptionChainRow[];
-  expiries: string[];
+  expiries: ExpiryOption[];
 
   // ── Filters ────────────────────────────────────────────────────────────────
   filter: DashboardFilter;
@@ -56,7 +62,7 @@ interface DashboardStore {
   setConnectionStatus: (status: Partial<ConnectionStatus>) => void;
   setActiveTab: (tab: ActiveTab) => void;
   selectStrike: (strike: number, side: 'call' | 'put') => void;
-  setExpiries: (expiries: string[]) => void;
+  setExpiries: (expiries: ExpiryOption[]) => void;
   setOrders: (orders: Order[]) => void;
   setIsChartModalOpen: (isOpen: boolean) => void;
   setEmaPeriod: (period: number) => void;
@@ -236,7 +242,7 @@ export const useDashboardStore = create<DashboardStore>()(
     setExpiries: expiries => {
       set({ expiries });
       if (expiries.length > 0 && !get().filter.expiry) {
-        set(s => ({ filter: { ...s.filter, expiry: expiries[0] } }));
+        set(s => ({ filter: { ...s.filter, expiry: expiries[0].raw } }));
       }
     },
 

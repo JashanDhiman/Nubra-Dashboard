@@ -52,8 +52,8 @@ export function TopBar() {
         >
           {expiries.length === 0 && <option value="">Loading...</option>}
           {expiries.map(e => (
-            <option key={e} value={e}>
-              {e}
+            <option key={e.raw} value={e.raw}>
+              {e.formatted}
             </option>
           ))}
         </select>
