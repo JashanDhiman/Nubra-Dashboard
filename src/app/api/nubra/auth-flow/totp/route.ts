@@ -122,6 +122,8 @@ export async function POST(request: NextRequest) {
       userId: verifyData.userId,
       email: verifyData.email,
       ws_token: verifyData.env_info?.ws_token,
+      market_ws_url: verifyData.env_info?.market_ws_url,
+      user_ws_url: verifyData.env_info?.user_ws_url,
     });
   } catch (error) {
     console.error('Authentication error:', error);

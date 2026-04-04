@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message BatchWebSocketIndexMessage {
+  int64 timestamp = 1;
+  repeated WebSocketMsgIndex indexes = 2;
+  repeated WebSocketMsgIndex instruments = 3;
+}
+
+message WebSocketMsgIndex {
+  string indexname = 1;
+  int64 timestamp = 2;
+  int64 index_value = 3;
+  int64 high_index_value = 4;
+  int64 low_index_value = 5;
+  int64 volume = 6;
+  float changepercent = 7;
+  int64 tick_volume = 8;
+  int64 prev_close = 9;
+  string exchange = 10;
+  int64 volume_oi = 11;
+}

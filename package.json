@@ -16,6 +16,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "next": "14.2.5",
+    "protobufjs": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/protobufjs": "^6.0.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/speakeasy": "^2.0.10",

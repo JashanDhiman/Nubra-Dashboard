@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+message BatchWebSocketGreeksMessage {
+  int64 timestamp = 1;
+  repeated WebSocketMsgOptionChainItem instruments = 2;
+}
+
+message WebSocketMsgOptionChainItem {
+  int64 inst_id = 1;
+  int64 ts = 2;
+  int64 sp = 3;
+  int32 ls = 4;
+  int64 ltp = 5;
+  float ltpchg = 6;
+  float iv = 7;
+  float delta = 8;
+  float gamma = 9;
+  float theta = 10;
+  float vega = 11;
+  int64 oi = 12;
+  int64 volume = 13;
+  int64 ref_id = 14;
+  int64 prev_oi = 15;
+  int64 price_pcp = 16;
+}
