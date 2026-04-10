@@ -1,5 +1,15 @@
 syntax = "proto3";
 
+message Any {
+  string typeUrl = 1;
+  BatchWebSocketIndexMessage value = 2;
+}
+
+message GenericData {
+  string key = 1;
+  Any data = 2;
+}
+
 message BatchWebSocketIndexMessage {
   int64 timestamp = 1;
   repeated WebSocketMsgIndex indexes = 2;

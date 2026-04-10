@@ -14,6 +14,10 @@ interface AuthContextType {
   error: string | null;
   retryAuthentication: () => Promise<void>;
   logout: () => void;
+  wsToken: string | null;
+  sessionToken: string | null;
+  marketWsUrl: string | null;
+  userWsUrl: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wsToken, setWsToken] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [marketWsUrl, setMarketWsUrl] = useState<string | null>(null);
+  const [userWsUrl, setUserWsUrl] = useState<string | null>(null);
 
   const authenticate = async () => {
     try {
@@ -30,7 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Check if we already have a valid session token
       const existingToken = localStorage.getItem('sessionToken');
+      const existingWsToken = localStorage.getItem('wsToken');
+      const existingMarketWsUrl = localStorage.getItem('marketWsUrl');
+      const existingUserWsUrl = localStorage.getItem('userWsUrl');
+
       if (existingToken) {
+        setWsToken(existingWsToken);
+        setSessionToken(existingToken);
+        setMarketWsUrl(existingMarketWsUrl);
+        setUserWsUrl(existingUserWsUrl);
         setIsAuthenticated(true);
         setIsLoading(false);
         return;
@@ -55,9 +71,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.success && data.session_token) {
         localStorage.setItem('sessionToken', data.session_token);
         localStorage.setItem('userId', data.userId?.toString() || '');
-        localStorage.setItem('wsToken', data.ws_token);
+        localStorage.setItem('wsToken', data.ws_token || '');
+        localStorage.setItem('marketWsUrl', data.market_ws_url || '');
+        localStorage.setItem('userWsUrl', data.user_ws_url || '');
+
+        setWsToken(data.ws_token || null);
+        setSessionToken(data.session_token || null);
+        setMarketWsUrl(data.market_ws_url || null);
+        setUserWsUrl(data.user_ws_url || null);
         setIsAuthenticated(true);
-        console.log('[AuthProvider] Authentication successful');
       } else {
         throw new Error('Failed to obtain session token');
       }
@@ -68,6 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('sessionToken');
       localStorage.removeItem('userId');
       localStorage.removeItem('wsToken');
+      localStorage.removeItem('marketWsUrl');
+      localStorage.removeItem('userWsUrl');
+
+      setWsToken(null);
+      setSessionToken(null);
+      setMarketWsUrl(null);
+      setUserWsUrl(null);
     } finally {
       setIsLoading(false);
     }
@@ -78,10 +107,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('sessionToken');
     localStorage.removeItem('userId');
     localStorage.removeItem('wsToken');
+    localStorage.removeItem('marketWsUrl');
+    localStorage.removeItem('userWsUrl');
 
     // Update state
     setIsAuthenticated(false);
     setError(null);
+    setWsToken(null);
+    setSessionToken(null);
+    setMarketWsUrl(null);
+    setUserWsUrl(null);
   };
 
   const retryAuthentication = async () => {
@@ -101,6 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error,
         retryAuthentication,
         logout,
+        sessionToken,
+        wsToken,
+        marketWsUrl,
+        userWsUrl,
       }}
     >
       {children}

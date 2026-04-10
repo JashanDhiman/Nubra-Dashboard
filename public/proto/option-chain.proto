@@ -5,13 +5,14 @@ message Any {
   WebSocketMsgOptionChainUpdate value = 2;
 }
 
-message Envelope {
-  Any payload = 1;
+message GenericData {
+  string key = 1;
+  Any data = 2;
 }
 
 message WebSocketMsgOptionChainUpdate {
   string asset = 1;
-  WebSocketMsgOptionChainItem expiry = 2;
+  string expiry = 2;
   repeated WebSocketMsgOptionChainItem ce = 3;
   repeated WebSocketMsgOptionChainItem pe = 4;
   int64 atm = 5;

@@ -53,3 +53,30 @@ select:focus {
 .chain-row-selected td {
   background-color: rgba(0, 217, 126, 0.05);
 }
+
+/* Flash animations for price changes */
+@keyframes flash-green {
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-red {
+  0% {
+    background-color: rgba(239, 68, 68, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-flash-green {
+  animation: flash-green 0.4s ease-out;
+}
+
+.animate-flash-red {
+  animation: flash-red 0.4s ease-out;
+}

@@ -21,7 +21,7 @@ export default function WebSocketComponent() {
         );
 
         ws.binaryType = 'arraybuffer';
-        const Any = root.lookupType('Any');
+        const GenericData = root.lookupType('GenericData');
 
         ws.onopen = () => {
           setStatus('connected');
@@ -40,12 +40,12 @@ export default function WebSocketComponent() {
               const buffer = new Uint8Array(event.data);
 
               // ✅ Decode wrapper
-              const outer = Any.decode(buffer) as unknown as { typeUrl: string; value: any };
+              const outer = GenericData.decode(buffer) as unknown as { key: string; data: any };
               console.log('✅ Outer:', outer);
 
-              if (outer.typeUrl === "option") {
+              if (outer.key === "option") {
                 setMessages(prev => [
-                  { timestamp: Date.now(), data: outer.value.expiry },
+                  { timestamp: Date.now(), data: outer.data.expiry },
                   ...prev.slice(0, 20)
                 ]);
               }
