@@ -13,10 +13,9 @@ import {
   ConnectionStatus,
   FlashState,
   ActiveTab,
-  Underlying,
   Order,
 } from '@/types';
-import { calculateMaxPain, calculatePCR, calculateGEX } from '@/lib/analytics';
+import { calculateMaxPain, calculatePCR } from '@/lib/analytics';
 
 // Expiry object type
 interface ExpiryOption {
@@ -134,8 +133,20 @@ export const useDashboardStore = create<DashboardStore>()(
     },
 
     applyTick: tick => {
+      // Validate tick data
+      if (!tick || !tick.instrument_token) {
+        console.error(
+          '[Store] Invalid tick data - missing instrument_token:',
+          tick
+        );
+        return;
+      }
+
       const { rows, snapshot } = get();
-      if (!snapshot) return;
+      if (!snapshot) {
+        console.log('[Store] No snapshot available, ignoring tick');
+        return;
+      }
 
       // Find which row this tick belongs to
       const newRows = rows.map(row => {
@@ -143,7 +154,6 @@ export const useDashboardStore = create<DashboardStore>()(
         let updatedRow = { ...row };
 
         if (row.call.instrument_token === tick.instrument_token) {
-          const prevLTP = row.call.ltp;
           updatedRow = {
             ...row,
             call: {
@@ -158,15 +168,10 @@ export const useDashboardStore = create<DashboardStore>()(
               exchange_timestamp: tick.exchange_timestamp,
             },
           };
-
-          // Flash state
-          const direction = (tick.ltp ?? prevLTP) > prevLTP ? 'up' : 'down';
-          scheduleFlash(tick.instrument_token, direction, set);
           updated = true;
         }
 
         if (row.put.instrument_token === tick.instrument_token) {
-          const prevLTP = row.put.ltp;
           updatedRow = {
             ...updatedRow,
             put: {
@@ -181,8 +186,6 @@ export const useDashboardStore = create<DashboardStore>()(
               exchange_timestamp: tick.exchange_timestamp,
             },
           };
-          const direction = (tick.ltp ?? prevLTP) > prevLTP ? 'up' : 'down';
-          scheduleFlash(tick.instrument_token, direction, set);
           updated = true;
         }
 
@@ -255,19 +258,3 @@ export const useDashboardStore = create<DashboardStore>()(
     setShowEMA: show => set({ showEMA: show }),
   }))
 );
-
-// Flash helper — clears flash after 400ms
-function scheduleFlash(
-  token: string,
-  direction: 'up' | 'down',
-  set: (partial: Partial<DashboardStore>) => void
-) {
-  //set((s: DashboardStore) => ({
-  //  flashState: { ...s.flashState, [token]: direction },
-  //}));
-  //setTimeout(() => {
-  //  set((s: DashboardStore) => ({
-  //    flashState: { ...s.flashState, [token]: null },
-  //  }));
-  //}, 400);
-}

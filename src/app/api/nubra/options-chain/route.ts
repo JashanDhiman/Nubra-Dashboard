@@ -205,7 +205,8 @@ export async function GET(request: NextRequest) {
       transformedSnapshot.rows.push({
         strike: strike,
         call: {
-          instrument_token: ceItem?.inst_id?.toString() || '0',
+          instrument_token:
+            ceItem?.ref_id?.toString() || ceItem?.inst_id?.toString() || '0',
           trading_symbol: `${snapshot.chain.asset}${strike}CE`, // Construct trading symbol
           ltp: ceItem?.ltp || 0,
           bid: 0, // Default values since not in API response
@@ -234,7 +235,8 @@ export async function GET(request: NextRequest) {
           exchange_timestamp: ceItem?.ts || Date.now() * 1_000_000,
         },
         put: {
-          instrument_token: peItem?.inst_id?.toString() || '0',
+          instrument_token:
+            peItem?.ref_id?.toString() || peItem?.inst_id?.toString() || '0',
           trading_symbol: `${snapshot.chain.asset}${strike}PE`, // Construct trading symbol
           ltp: peItem?.ltp || 0,
           bid: 0, // Default values since not in API response

@@ -8,7 +8,11 @@
  * PROC-01: Real-time tick processing (exchange timestamps in nanoseconds)
  */
 
-import { WsTick, WsMode, WsServerMessage } from '@/types';
+import { WsMode, WsTick } from '../types';
+import {
+  initNubraProto,
+  decodeOptionChainUpdate,
+} from './nubra-proto';
 
 type TickHandler = (ticks: WsTick[]) => void;
 type StatusHandler = (status: WSStatus) => void;
@@ -29,28 +33,28 @@ export class NubraWebSocketManager {
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 10;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  private readonly heartbeatInterval = 25_000; // 25s ping
 
   constructor(wsUrl: string) {
     this.wsUrl = wsUrl;
   }
 
   // ── Connect with WS auth token ────────────────────────────────────────────
-  async connect(wsToken: string): Promise<void> {
-    // Prevent reconnection if already connected
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      console.log('[NubraWS] Already connected, skipping connection attempt');
+  async connect(token: string): Promise<void> {
+    if (this.isConnected()) {
+      console.warn('[NubraWS] Already connected');
       return;
     }
 
-    this.wsToken = wsToken;
-    // Use correct Nubra WebSocket endpoint format with token as query parameter
-    this.wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'wss://api.nubra.io/apibatch/ws'}?token=${wsToken}`;
-    this.doConnect();
+    // Initialize protobuf schema
+    await initNubraProto();
+
+    this.wsToken = token;
+    // Use the WebSocket URL provided during construction, append token as query parameter
+    const wsUrlWithToken = `${this.wsUrl}?token=${token}`;
+    this.doConnect(wsUrlWithToken);
   }
 
-  private doConnect(): void {
+  private doConnect(url?: string): void {
     // Prevent duplicate connections
     if (
       this.ws?.readyState === WebSocket.OPEN ||
@@ -63,11 +67,9 @@ export class NubraWebSocketManager {
     this.setStatus('connecting');
 
     try {
-      console.log(
-        '[NubraWS] Connecting to WebSocket',
-        process.env.NEXT_PUBLIC_WS_URL
-      );
-      this.ws = new WebSocket(this.wsUrl);
+      const connectUrl = url || this.wsUrl;
+      console.log('[NubraWS] Connecting to WebSocket', connectUrl);
+      this.ws = new WebSocket(connectUrl);
       this.ws.binaryType = 'arraybuffer';
 
       // Add connection timeout
@@ -130,7 +132,6 @@ export class NubraWebSocketManager {
           );
         }
 
-        this.stopHeartbeat();
         if (typeof connectionTimeout !== 'undefined') {
           clearTimeout(connectionTimeout);
         }
@@ -148,58 +149,101 @@ export class NubraWebSocketManager {
   }
 
   // ── Message handling ──────────────────────────────────────────────────────
-  private handleMessage(event: MessageEvent): void {
+  private async handleMessage(event: MessageEvent): Promise<void> {
     try {
-      // Nubra sends binary data (protobuf) or text messages
-      const message =
-        typeof event.data === 'string'
-          ? event.data
-          : new TextDecoder('utf-8').decode(event.data);
-      console.log('[NubraWS] Received message:', message);
+      // Get the raw data - could be string, ArrayBuffer, or Blob
+      let rawData: string | Uint8Array;
 
-      // Check for authentication responses
-      if (message.includes('auth') || message.includes('token')) {
-        if (message.includes('success') || message.includes('connected')) {
-          console.log('[NubraWS] Authentication successful');
-        } else if (message.includes('error') || message.includes('invalid')) {
-          console.error('[NubraWS] Authentication failed:', message);
+      if (typeof event.data === 'string') {
+        rawData = event.data;
+        console.log('[NubraWS] Received string data, length:', rawData.length);
+      } else if (event.data instanceof ArrayBuffer) {
+        rawData = new Uint8Array(event.data);
+        console.log('[NubraWS] Received ArrayBuffer, length:', rawData.length);
+
+        // Check if it's actually text data disguised as binary
+        try {
+          const decoded = decodeOptionChainUpdate(rawData as Uint8Array);
+          rawData = decoded;
+        } catch (decodeError) {
+          console.log(
+            '[NubraWS] Could not decode ArrayBuffer as option chain:',
+            decodeError
+          );
+        }
+      } else {
+        console.warn('[NubraWS] Unknown data type:', typeof event.data);
+        return;
+      }
+
+      console.log('[NubraWS] Final data type for processing:', rawData);
+
+      // For string messages (auth, control messages)
+      if (typeof rawData === 'string') {
+        const message = rawData;
+        // Check for authentication responses
+        if (message.includes('auth') || message.includes('token')) {
+          if (message.includes('success') || message.includes('connected')) {
+            console.log('[NubraWS] Authentication successful');
+          } else if (message.includes('error') || message.includes('invalid')) {
+            console.error('[NubraWS] Authentication failed:', message);
+            this.setStatus('error');
+            return;
+          }
+        }
+
+        // Check for subscription responses
+        if (
+          message.includes('subscribed') ||
+          message.includes('subscription') ||
+          message.includes('post_market')
+        ) {
+          console.log('[NubraWS] Subscription confirmed');
+          return;
+        } else if (message.includes('error')) {
+          console.error('[NubraWS] Error message:', message);
           this.setStatus('error');
           return;
         }
       }
 
-      // Parse Nubra's message format
-      // Messages can be subscription responses, data updates, or control messages
-      if (
-        message.includes('option') ||
-        message.includes('greeks') ||
-        message.includes('orderbook')
-      ) {
-        // This is likely a data message - parse accordingly
-        this.parseDataMessage(message);
-      } else if (message.includes('connected') || message.includes('success')) {
-        console.log('[NubraWS] Subscription confirmed');
-      } else if (message.includes('error')) {
-        console.error('[NubraWS] Error message:', message);
-        this.setStatus('error');
-      }
+      // For binary data (protobuf messages) or unhandled string messages
+      this.parseDataMessage(rawData);
     } catch (err) {
       console.error('[NubraWS] Message parse error:', err);
     }
   }
 
-  private parseDataMessage(message: string): void {
-    // For now, try to parse as JSON - in production this should handle protobuf
+  private parseDataMessage(message: any): void {
     try {
-      const data = JSON.parse(message);
-      // Convert Nubra format to our WsTick format
-      const ticks = this.convertNubraToTicks(data);
+      let parsedData;
+
+      // Handle string data (JSON format)
+      if (typeof message === 'string') {
+        console.log('[NubraWS] Parsing string message as JSON:', message);
+        parsedData = message;
+      } else {
+        // Handle binary data (protobuf)
+        parsedData = message;
+        console.log('[NubraWS] Processing binary/protobuf data:', parsedData);
+      }
+
+      // Convert to our WsTick format
+      const ticks = this.convertNubraToTicks(parsedData);
+      console.log('[NubraWS] Converted to ticks:', ticks.length, 'ticks');
       if (ticks.length > 0) {
+        console.log(
+          '[NubraWS] Calling tick handlers with',
+          ticks.length,
+          'ticks'
+        );
+        console.log('[NubraWS] Sample tick:', ticks[0]);
         this.tickHandlers.forEach(handler => handler(ticks));
+      } else {
+        console.log('[NubraWS] No ticks to send to handlers');
       }
     } catch (err) {
-      console.log('[NubraWS] Non-JSON message, likely protobuf data');
-      // TODO: Implement protobuf parsing when needed
+      console.error('[NubraWS] Data parsing error:', err);
     }
   }
 
@@ -207,19 +251,39 @@ export class NubraWebSocketManager {
     // Convert Nubra's option chain format to our WsTick format
     const ticks: WsTick[] = [];
 
+    console.log('[NubraWS] convertNubraToTicks called with data:', data);
+    console.log('[NubraWS] Data type:', typeof data);
+    console.log('[NubraWS] Data keys:', Object.keys(data));
+
+    // Handle ce (call options) array
     if (data.ce && Array.isArray(data.ce)) {
-      data.ce.forEach((item: any) => {
+      console.log(`[NubraWS] Found ce array with ${data.ce.length} items`);
+      data.ce.forEach((item: any, index: number) => {
+        const instrumentToken =
+          item.inst_id ||
+          item.instrument_token ||
+          item.token ||
+          item.id ||
+          item.refId;
+        if (!instrumentToken) {
+          console.warn(
+            `[NubraWS] ce[${index}] missing instrument token:`,
+            item
+          );
+          return;
+        }
         ticks.push({
-          instrument_token: item.inst_id?.toString(),
+          instrument_token: instrumentToken.toString(),
           mode: 'full',
           tradable: true,
-          exchange_timestamp: item.ts || Date.now() * 1_000_000,
-          last_trade_time: item.ts || Date.now(),
-          ltp: item.ltp || 0,
-          bid: 0,
-          ask: 0,
-          volume: item.volume || 0,
-          oi: item.oi || 0,
+          exchange_timestamp:
+            item.ts || item.exchange_timestamp || Date.now() * 1_000_000,
+          last_trade_time: item.ts || item.last_trade_time || Date.now(),
+          ltp: item.ltp || item.last_price || item.price || 0,
+          bid: item.bid || 0,
+          ask: item.ask || 0,
+          volume: item.volume || item.vol || 0,
+          oi: item.oi || item.open_interest || 0,
           greeks: item.iv
             ? {
                 iv: item.iv,
@@ -233,19 +297,35 @@ export class NubraWebSocketManager {
       });
     }
 
+    // Handle pe (put options) array
     if (data.pe && Array.isArray(data.pe)) {
-      data.pe.forEach((item: any) => {
+      console.log(`[NubraWS] Found pe array with ${data.pe.length} items`);
+      data.pe.forEach((item: any, index: number) => {
+        const instrumentToken =
+          item.inst_id ||
+          item.instrument_token ||
+          item.token ||
+          item.id ||
+          item.refId;
+        if (!instrumentToken) {
+          console.warn(
+            `[NubraWS] pe[${index}] missing instrument token:`,
+            item
+          );
+          return;
+        }
         ticks.push({
-          instrument_token: item.inst_id?.toString(),
+          instrument_token: instrumentToken.toString(),
           mode: 'full',
           tradable: true,
-          exchange_timestamp: item.ts || Date.now() * 1_000_000,
-          last_trade_time: item.ts || Date.now(),
-          ltp: item.ltp || 0,
-          bid: 0,
-          ask: 0,
-          volume: item.volume || 0,
-          oi: item.oi || 0,
+          exchange_timestamp:
+            item.ts || item.exchange_timestamp || Date.now() * 1_000_000,
+          last_trade_time: item.ts || item.last_trade_time || Date.now(),
+          ltp: item.ltp || item.last_price || item.price || 0,
+          bid: item.bid || 0,
+          ask: item.ask || 0,
+          volume: item.volume || item.vol || 0,
+          oi: item.oi || item.open_interest || 0,
           greeks: item.iv
             ? {
                 iv: item.iv,
@@ -257,21 +337,86 @@ export class NubraWebSocketManager {
             : undefined,
         });
       });
+    }
+
+    // Handle single tick format (fallback)
+    if (ticks.length === 0) {
+      const instrumentToken =
+        data.instrument_token ||
+        data.inst_id ||
+        data.token ||
+        data.id ||
+        data.refId;
+      if (instrumentToken) {
+        console.log('[NubraWS] Processing as single tick:', data);
+        ticks.push({
+          instrument_token: instrumentToken.toString(),
+          mode: 'full',
+          tradable: true,
+          exchange_timestamp:
+            data.exchange_timestamp || data.ts || Date.now() * 1_000_000,
+          last_trade_time: data.last_trade_time || data.ts || Date.now(),
+          ltp: data.ltp || data.last_price || data.price || 0,
+          bid: data.bid || 0,
+          ask: data.ask || 0,
+          volume: data.volume || data.vol || 0,
+          oi: data.oi || data.open_interest || 0,
+          greeks: data.iv
+            ? {
+                iv: data.iv,
+                delta: data.delta,
+                gamma: data.gamma,
+                theta: data.theta,
+                vega: data.vega,
+              }
+            : undefined,
+        });
+      } else {
+        console.warn(
+          '[NubraWS] Single tick data missing instrument token:',
+          data
+        );
+      }
+    }
+
+    console.log('[NubraWS] Total ticks created:', ticks.length);
+
+    // Debug: If no ticks created, show why
+    if (ticks.length === 0) {
+      console.log('[NubraWS] No ticks created - debugging data structure:');
+      console.log('[NubraWS] - has ce array:', !!data.ce);
+      console.log('[NubraWS] - ce is array:', Array.isArray(data.ce));
+      console.log('[NubraWS] - ce length:', data.ce?.length);
+      console.log('[NubraWS] - has pe array:', !!data.pe);
+      console.log('[NubraWS] - pe is array:', Array.isArray(data.pe));
+      console.log('[NubraWS] - pe length:', data.pe?.length);
+      console.log(
+        '[NubraWS] - has instrument_token fallback:',
+        !!(
+          data.instrument_token ||
+          data.inst_id ||
+          data.token ||
+          data.id ||
+          data.refId
+        )
+      );
+
+      // Try to see if data is nested under a property
+      if (data.data && typeof data.data === 'object') {
+        console.log('[NubraWS] Found nested data property:');
+        console.log('[NubraWS] - data.data keys:', Object.keys(data.data));
+        console.log('[NubraWS] - data.data has ce:', !!data.data.ce);
+        console.log('[NubraWS] - data.data has pe:', !!data.data.pe);
+      }
+
+      // Log the entire data structure for inspection
+      //console.log(
+      //  '[NubraWS] Full data structure:',
+      //  JSON.stringify(data, null, 2)
+      //);
     }
 
     return ticks;
-  }
-
-  // PROC-01: Normalize exchange timestamps from nanoseconds
-  private processTick = (tick: WsTick): WsTick => ({
-    ...tick,
-    exchange_timestamp: Math.floor(tick.exchange_timestamp / 1_000_000), // ns → ms
-  });
-
-  // ── Binary protocol decode (Nubra uses compact binary for performance) ────
-  private decodeBinary(buffer: ArrayBuffer): WsServerMessage {
-    const text = new TextDecoder('utf-8').decode(buffer);
-    return JSON.parse(text);
   }
 
   // ── Subscribe / Unsubscribe ───────────────────────────────────────────────
@@ -280,11 +425,45 @@ export class NubraWebSocketManager {
     const subscriptionKey = `${exchange}-${asset}-${expiry}`;
     this.optionSubscriptions.add(subscriptionKey);
 
+    console.log('[NubraWS] subscribeOptionChain called:', {
+      exchange,
+      asset,
+      expiry,
+      wsReadyState: this.ws?.readyState,
+      wsToken: this.wsToken ? 'present' : 'missing',
+      wsConnected: this.ws?.readyState === WebSocket.OPEN,
+    });
+
     if (this.ws?.readyState === WebSocket.OPEN && this.wsToken) {
+      //const postMarketMessage = `batch_subscribe ${this.wsToken} post_market true`;
+      //console.log('[NubraWS] Enabling post-market mode for testing');
+      //this.ws.send(postMarketMessage);
       // Use actual token in subscription messages
-      const message = `batch_subscribe ${this.wsToken} option [{"exchange":"${exchange}","asset":"${asset}","expiry":"${expiry}"}]`;
-      console.log('[NubraWS] Subscribing to option chain');
+      const intervalMessage = `batch_subscribe ${this.wsToken} socket_interval option 1s`;
+      const optionMessage = `batch_subscribe ${this.wsToken} option [{"exchange":"${exchange}","asset":"${asset}","expiry":"${expiry}"}]`;
+      console.log(
+        '[NubraWS] Subscribing to option chain with message:',
+        optionMessage
+      );
+      this.ws.send(intervalMessage);
+      this.ws.send(optionMessage);
+    } else {
+      console.warn(
+        '[NubraWS] Cannot subscribe - WebSocket not ready or token missing'
+      );
+    }
+  }
+
+  // Enable post-market mode for testing when markets are closed
+  enablePostMarketMode(): void {
+    if (this.ws?.readyState === WebSocket.OPEN && this.wsToken) {
+      const message = `batch_subscribe ${this.wsToken} post_market true`;
+      console.log('[NubraWS] Enabling post-market mode for testing');
       this.ws.send(message);
+    } else {
+      console.warn(
+        '[NubraWS] Cannot enable post-market mode - WebSocket not connected'
+      );
     }
   }
 
@@ -363,34 +542,6 @@ export class NubraWebSocketManager {
     }
   }
 
-  // ── Send helper ───────────────────────────────────────────────────────────
-  private send(message: string): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      console.log('[NubraWS] Sending message:', message);
-      this.ws.send(message);
-    } else {
-      console.warn('[NubraWS] Cannot send message, WebSocket not connected');
-    }
-  }
-
-  // ── Heartbeat ─────────────────────────────────────────────────────────────
-  private startHeartbeat(): void {
-    this.stopHeartbeat();
-    this.heartbeatTimer = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        // Nubra may not use standard ping, could be a control message
-        this.send('ping');
-      }
-    }, this.heartbeatInterval);
-  }
-
-  private stopHeartbeat(): void {
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
-  }
-
   // ── Reconnect with exponential backoff ───────────────────────────────────
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -437,9 +588,12 @@ export class NubraWebSocketManager {
     return this.status;
   }
 
+  isConnected(): boolean {
+    return this.status === 'connected';
+  }
+
   // OPS-03: Clean disconnect — prevent file descriptor leaks
   disconnect(): void {
-    this.stopHeartbeat();
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.optionSubscriptions.clear();
     this.greeksSubscriptions.clear();

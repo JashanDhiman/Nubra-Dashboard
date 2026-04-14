@@ -12,7 +12,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { NubraWebSocketManager } from '@/lib/websocket-manager';
 import { useDashboardStore } from '@/lib/store';
 import { OptionChainSnapshot, WsTick } from '@/types';
-import { useAuthentication } from './useAuthentication';
+import { useAuth } from '@/contexts/AuthContext';
 
 const POLL_INTERVAL = 30_000; // 30s REST fallback polling
 const MOCK_TICK_INTERVAL = 700; // ms between simulated ticks
@@ -81,7 +81,9 @@ export function useLiveOptionChain() {
     isAuthenticated,
     isLoading: authLoading,
     error: authError,
-  } = useAuthentication();
+    sessionToken,
+    marketWsUrl,
+  } = useAuth();
   const wsManager = useRef<NubraWebSocketManager | null>(null);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const mockTickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -101,7 +103,6 @@ export function useLiveOptionChain() {
 
     setConnectionStatus({ rest: 'loading' });
     try {
-      const sessionToken = localStorage.getItem('sessionToken');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -155,7 +156,6 @@ export function useLiveOptionChain() {
         `/api/nubra/options-chain?underlying=${filter.underlying}&action=expiries`,
         { headers }
       );
-      console.log(res);
       if (!res.ok) return;
       const data = await res.json();
       setExpiries(data.expiries ?? []);
@@ -193,7 +193,10 @@ export function useLiveOptionChain() {
 
       if (wsManager.current) wsManager.current.disconnect();
 
-      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}`;
+      const wsUrl =
+        marketWsUrl ||
+        process.env.NEXT_PUBLIC_WS_URL ||
+        'wss://api.nubra.io/apibatch/ws';
       const ws = new NubraWebSocketManager(wsUrl);
       wsManager.current = ws;
 
@@ -201,26 +204,18 @@ export function useLiveOptionChain() {
       ws.onTick((ticks: WsTick[]) => ticks.forEach(t => applyTick(t)));
 
       try {
-        // Get the session token (different from websokect token)
-        const wsToken = localStorage.getItem('sessionToken'); // use wsToken if websokect token is required
-        if (!wsToken) {
+        // Use WebSocket token from AuthContext
+        if (!sessionToken) {
           throw new Error(
             'No WebSocket token available for WebSocket connection'
           );
         }
+        await ws.connect(sessionToken);
 
-        console.log(
-          '[useLiveOptionChain] Connecting to WebSocket with ws_token:',
-          wsToken.substring(0, 10) + '...'
-        );
-        await ws.connect(wsToken);
+        // Enable post-market mode for testing when markets are closed
+        //ws.enablePostMarketMode();
 
         // Subscribe to option chain for real-time updates
-        console.log('[useLiveOptionChain] Subscribing to option chain:', {
-          exchange,
-          asset,
-          expiry,
-        });
         ws.subscribeOptionChain(exchange, asset, expiry);
 
         // Also subscribe to Greeks for individual instruments if needed
@@ -229,11 +224,6 @@ export function useLiveOptionChain() {
           row.put.instrument_token,
         ]);
         if (tokens.length > 0) {
-          console.log(
-            '[useLiveOptionChain] Subscribing to Greeks for',
-            tokens.length,
-            'instruments'
-          );
           ws.subscribeGreeks(tokens);
         }
 
@@ -247,7 +237,7 @@ export function useLiveOptionChain() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [applyTick, setConnectionStatus, stopMockTicks]
+    [applyTick, setConnectionStatus, stopMockTicks, isAuthenticated]
   );
 
   const startPolling = useCallback(() => {
@@ -269,7 +259,6 @@ export function useLiveOptionChain() {
     async function init() {
       // Only proceed if authentication is stable and successful
       if (authLoading) {
-        console.log('[useLiveOptionChain] Authentication loading...');
         return;
       }
 
@@ -296,9 +285,6 @@ export function useLiveOptionChain() {
     }
 
     if (filter.expiry && isAuthenticated) {
-      console.log(
-        '[useLiveOptionChain] Initializing WebSocket connection - conditions met'
-      );
       stopMockTicks();
       init();
     } else {
