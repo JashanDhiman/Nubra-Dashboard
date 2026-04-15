@@ -1,10 +1,12 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
 import protobuf from 'protobufjs';
 
 export default function WebSocketComponent() {
-  const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [status, setStatus] = useState<
+    'disconnected' | 'connecting' | 'connected' | 'error'
+  >('disconnected');
   const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
@@ -34,29 +36,31 @@ export default function WebSocketComponent() {
           //ws.send(postMarketMessage);
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = event => {
           try {
             if (event.data instanceof ArrayBuffer) {
               const buffer = new Uint8Array(event.data);
 
               // ✅ Decode wrapper
-              const outer = GenericData.decode(buffer) as unknown as { key: string; data: any };
+              const outer = GenericData.decode(buffer) as unknown as {
+                key: string;
+                data: any;
+              };
               console.log('✅ Outer:', outer);
 
-              if (outer.key === "option") {
+              if (outer.key === 'option') {
                 setMessages(prev => [
                   { timestamp: Date.now(), data: outer.data.expiry },
-                  ...prev.slice(0, 20)
+                  ...prev.slice(0, 20),
                 ]);
               }
             }
-
           } catch (err) {
             console.error('❌ Decode error:', err);
           }
         };
 
-        ws.onerror = (err) => {
+        ws.onerror = err => {
           console.error('❌ WebSocket error:', err);
           setStatus('error');
         };
@@ -82,17 +86,23 @@ export default function WebSocketComponent() {
 
   const getStatusColor = () => {
     switch (status) {
-      case 'connected': return 'text-green-600';
-      case 'connecting': return 'text-yellow-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'connected':
+        return 'text-green-600';
+      case 'connecting':
+        return 'text-yellow-600';
+      case 'error':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Nubra WebSocket Data Streaming</h1>
+        <h1 className="text-2xl font-bold mb-2">
+          Nubra WebSocket Data Streaming
+        </h1>
         <div className="flex items-center gap-2">
           <span className="font-medium">Status:</span>
           <span className={getStatusColor()}>{status.toUpperCase()}</span>

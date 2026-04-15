@@ -9,10 +9,7 @@
  */
 
 import { WsMode, WsTick } from '../types';
-import {
-  initNubraProto,
-  decodeOptionChainUpdate,
-} from './nubra-proto';
+import { initNubraProto, decodeOptionChainUpdate } from './nubra-proto';
 
 type TickHandler = (ticks: WsTick[]) => void;
 type StatusHandler = (status: WSStatus) => void;

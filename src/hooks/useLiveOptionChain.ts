@@ -124,6 +124,7 @@ export function useLiveOptionChain() {
       console.error('[useLiveOptionChain] REST fetch failed:', err);
       setConnectionStatus({ rest: 'error' });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filter.underlying,
     filter.expiry,
@@ -303,6 +304,7 @@ export function useLiveOptionChain() {
       cancelled = true;
     };
     // Only depend on filter changes and authentication state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filter.underlying,
     filter.expiry,
