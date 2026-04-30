@@ -1,163 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import protobuf from 'protobufjs';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function WebSocketComponent() {
-  const [status, setStatus] = useState<
-    'disconnected' | 'connecting' | 'connected' | 'error'
-  >('disconnected');
-  const [messages, setMessages] = useState<any[]>([]);
+export default function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    let ws: WebSocket;
-
-    const init = async () => {
-      try {
-        // ✅ Load proto file
-        const root = await protobuf.load('/proto/option-chain.proto');
-
-        // ✅ Create WebSocket
-        ws = new WebSocket(
-          `wss://api.nubra.io/apibatch/ws?token=${localStorage.getItem('sessionToken')}`
-        );
-
-        ws.binaryType = 'arraybuffer';
-        const GenericData = root.lookupType('GenericData');
-
-        ws.onopen = () => {
-          setStatus('connected');
-          console.log('✅ WebSocket connected');
-          const optionMessage = `batch_subscribe ${localStorage.getItem('sessionToken')} option [{"exchange":"NSE","asset":"NIFTY","expiry":"20260413"}]`;
-          console.log('[NubraWS] Subscribing to option chain');
-          ws.send(optionMessage);
-          // Enabling post market data
-          //const postMarketMessage = `batch_subscribe ${localStorage.getItem('sessionToken')} post_market true`;
-          //ws.send(postMarketMessage);
-        };
-
-        ws.onmessage = event => {
-          try {
-            if (event.data instanceof ArrayBuffer) {
-              const buffer = new Uint8Array(event.data);
-
-              // ✅ Decode wrapper
-              const outer = GenericData.decode(buffer) as unknown as {
-                key: string;
-                data: any;
-              };
-              console.log('✅ Outer:', outer);
-
-              if (outer.key === 'option') {
-                setMessages(prev => [
-                  { timestamp: Date.now(), data: outer.data.expiry },
-                  ...prev.slice(0, 20),
-                ]);
-              }
-            }
-          } catch (err) {
-            console.error('❌ Decode error:', err);
-          }
-        };
-
-        ws.onerror = err => {
-          console.error('❌ WebSocket error:', err);
-          setStatus('error');
-        };
-
-        ws.onclose = () => {
-          console.log('🔌 WebSocket closed');
-          setStatus('disconnected');
-        };
-      } catch (err) {
-        console.error('❌ Proto load error:', err);
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/login');
       }
-    };
-
-    init();
-
-    // ✅ Cleanup
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, []);
-
-  const getStatusColor = () => {
-    switch (status) {
-      case 'connected':
-        return 'text-green-600';
-      case 'connecting':
-        return 'text-yellow-600';
-      case 'error':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
     }
-  };
+  }, [isAuthenticated, isLoading, router]);
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">
-          Nubra WebSocket Data Streaming
-        </h1>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Status:</span>
-          <span className={getStatusColor()}>{status.toUpperCase()}</span>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+      <div className="flex flex-col items-center max-w-sm p-8 bg-surface-1 rounded-2xl border border-border shadow-xl backdrop-blur-md bg-opacity-70">
+        {/* Modern animated loading element */}
+        <div className="relative w-16 h-16 mb-6">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"></div>
         </div>
-      </div>
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Recent Messages</h2>
-        <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-          {messages.length === 0 ? (
-            <p className="text-gray-500">No messages received yet</p>
-          ) : (
-            messages.map((msg, index) => (
-              <div key={index} className="mb-3 p-3 bg-black rounded border">
-                <div className="text-xs text-gray-500 mb-1">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </div>
-                <pre className="text-sm overflow-x-auto">
-                  {JSON.stringify(msg.data, null, 2)}
-                </pre>
-              </div>
-            ))
-          )}
-        </div>
+        <h2 className="text-xl font-bold tracking-tight mb-2">
+          Connecting to Nubra
+        </h2>
+        <p className="text-sm text-muted-foreground text-center animate-pulse">
+          Verifying your session and redirecting...
+        </p>
       </div>
     </div>
   );
 }
-
-// ============================================================================================
-
-//'use client';
-
-//import { useEffect } from 'react';
-//import { useRouter } from 'next/navigation';
-
-//export default function HomePage() {
-//  const router = useRouter();
-
-//  useEffect(() => {
-//    // Redirect to dashboard, which will handle authentication
-//    router.push('/dashboard');
-//  }, [router]);
-
-//  return (
-//    <div className="min-h-screen flex items-center justify-center bg-surface-2">
-//      <div className="text-center">
-//        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-//        <p className="mt-2 text-muted-foreground">
-//          Redirecting to dashboard...
-//        </p>
-//      </div>
-//    </div>
-//  );
-//}
 
 // ===============================its phone otp based authentication===============================
 

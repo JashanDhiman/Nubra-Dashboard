@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+build
+coverage
+*.log
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.env
+public/uploads
+.antigravityignore

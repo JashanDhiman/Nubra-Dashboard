@@ -12,7 +12,6 @@ export default function LoginPage() {
     retryAuthentication,
   } = useAuth();
   const router = useRouter();
-  const [isManualLogin, setIsManualLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -66,63 +65,24 @@ export default function LoginPage() {
               </p>
             </div>
           )}
-
-          {!authLoading && !authError && !isAuthenticated && (
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-4">
-                Automatic TOTP authentication is ready
-              </p>
-              <button
-                onClick={() => setIsManualLogin(true)}
-                className="text-primary hover:text-primary/80 text-sm underline"
-              >
-                Or login manually
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Manual Login Form */}
-        {isManualLogin && (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Click the button below to authenticate using your TOTP
-                  credentials
-                </p>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            {error && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
+            )}
 
-              {error && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                  <p className="text-sm text-destructive">{error}</p>
-                </div>
-              )}
-
-              <button
-                onClick={handleManualLogin}
-                disabled={isLoading || authLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Authenticating...' : 'Login with TOTP'}
-              </button>
-
-              <button
-                onClick={() => setIsManualLogin(false)}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Environment Info */}
-        <div className="mt-6 border-t border-border pt-6">
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>• TOTP authentication is configured</p>
-            <p>• Make sure your environment variables are set</p>
-            <p>• Session will be automatically managed</p>
+            <button
+              onClick={handleManualLogin}
+              disabled={isLoading || authLoading}
+              className="group relative w-full flex justify-center py-2 px-4 border-accent-blue text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/30 text-sm font-medium rounded-md text-primary-foreground focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Authenticating...' : 'Login with TOTP'}
+            </button>
           </div>
         </div>
       </div>
